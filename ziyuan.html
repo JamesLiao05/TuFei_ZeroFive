@@ -1,6 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+      <style>
+/* unvisited link */
+a:link {
+  color: rgb(0, 0, 0);
+}
+
+/* visited link */
+a:visited {
+  color: rgb(255, 0, 118);
+}
+
+/* mouse over link */
+a:hover {
+  color: rgb(0, 0, 255);
+}
+
+/* selected link */
+a:active {
+  color: rgb(60, 60, 60);
+}
+                p1 {
+  font-size: 1.25em;
+}
+          p1 {
+  background-color: rgb(180, 180, 180);
+}
+</style>
+     
+      
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,34 +40,32 @@
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
-        <a class="navbar-brand" href="#">Navbar</a>
+        <a class="navbar-brand" href="#">导航栏</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
-              <a class="nav-link" href="https://tufei05.xyz">Home <span class="sr-only">(current)</span></a>
+              <a class="nav-link" href="https://tufei05.xyz">主页 <span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Link</a>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">列表</a>
               <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="#">Action</a>
-                <a class="dropdown-item" href="#">Another action</a>
+                <a class="dropdown-item" href="ziyuan.html">暂无</a>
+                <a class="dropdown-item" href="ziyuan.html">暂无</a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#">Something else here</a>
+                <a class="dropdown-item" href="ziyuan.html">暂无</a>
               </div>
             </li>
             <li class="nav-item">
-              <a class="nav-link disabled" href="#">Disabled</a>
             </li>
           </ul>
           <form class="form-inline my-2 my-lg-0">
-            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            <input class="form-control mr-sm-2" type="search" placeholder="这东西就是摆设" aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">搜索</button>
           </form>
         </div>
       </div>
@@ -116,7 +143,7 @@
       </div>
     </div>
     <hr>
-    <h2 class="text-center">Recommended Sites</h2>
+    <h2 class="text-center">推荐网站</h2>
     <hr>
     <div class="container">
       <div class="row text-center">
@@ -126,7 +153,7 @@
             <div class="card-body">
               <h5 class="card-title">Minecraft official website</h5>
               <p class="card-text">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Minecraft我的世界官方&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;你可以在这里面购买到正版账号</p>
-              <a href="#" class="btn btn-primary">Add to Cart</a>
+              <a href="https://www.minecraft.net/zh-hans" class="btn btn-primary">前去访问</a>
             </div>
           </div>
         </div>
@@ -136,7 +163,7 @@
             <div class="card-body">
               <h5 class="card-title">MCBBS中文论坛</h5>
               <p class="card-text">国内知名，大型我的世界论坛和资源分享网站，你可以找到你需要的东西</p>
-              <a href="#" class="btn btn-primary">Add to Cart</a>
+              <a href="https://www.mcbbs.net/portal.php" class="btn btn-primary">前去访问</a>
             </div>
           </div>
         </div>
@@ -146,43 +173,14 @@
             <div class="card-body">
               <h5 class="card-title">MCmod百科</h5>
               <p class="card-text">我的世界资源分享网站，里面有详细的分类和许多高级工具&nbsp;</p>
-              <a href="#" class="btn btn-primary">Add to Cart</a>
+              <a href="https://www.mcmod.cn/" class="btn btn-primary">前去访问</a>
             </div>
           </div>
         </div>
-      </div>
-      <div class="row text-center mt-4">
-        <div class="col-md-4 pb-1 pb-md-0">
-          <div class="card">
-<div class="card-body">
-          <h5 class="card-title">&nbsp;</h5>
-              <p class="card-text">&nbsp;</p>
-              
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 pb-1 pb-md-0">
-          <div class="card">
-<div class="card-body">
-          <h5 class="card-title">&nbsp;</h5>
-              <p class="card-text">&nbsp;</p>
-              
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 pb-1 pb-md-0">
-          <div class="card">
-<div class="card-body">
-          <h5 class="card-title">&nbsp;</h5>
-              <p class="card-text">&nbsp;</p>
-              
-            </div>
-          </div>
-        </div>
-      </div>
+
     </div>
     <hr>
-    <h2 class="text-center">My Channel</h2>
+    <h2 class="text-center">我的频道</h2>
     <hr>
     <div class="container">
       <div class="row">
@@ -191,7 +189,7 @@
             <li class="media">
               <img class="mr-3" src="tupian/douyin.jpg" alt="Generic placeholder image">
               <div class="media-body">
-                <h5 class="mt-0 mb-1">抖音上关注我</h5>
+                  <p1><b><a href="https://www.douyin.com/user/MS4wLjABAAAA8tLmMP_ToSPciX4S6cqHqGAZcHkfAol4R1wBMGMvUxD-6iGEPlWrwwz5zXS2Ap4z" target="_blank">抖音上关注我</a></b></p1>
                 关注 突斐ZeroFive收看更多Minecraft精彩视频
               </div>
             </li>
@@ -204,8 +202,8 @@
             <li class="media">
               <img class="mr-3" src="tupian/kuaishou.jpg" alt="Generic placeholder image">
               <div class="media-body">
-                <h5 class="mt-0 mb-1">快手上关注我</h5>
-                关注 突斐ZeroFive收看更多Minecraft精彩视频
+                <p1><b><a href="https://www.kuaishou.com/profile/3xai4iewz5yhsxe" target="_blank">快手上关注我</a></b></p1>
+                <h9>关注 突斐ZeroFive收看更多Minecraft精彩视频</h9>
               </div>
             </li>
             
@@ -215,9 +213,9 @@
         <div class="col-lg-4">
           <ul class="list-unstyled">
             <li class="media">
-              <img class="mr-3" src="images/100X125.gif" alt="Generic placeholder image">
+              <img class="mr-3" src="tupian/bilibili.jpg" alt="Generic placeholder image">
               <div class="media-body">
-                <h5 class="mt-0 mb-1">Bilibili上关注我</h5>
+                <p1><b><a href="https://space.bilibili.com/1349751488" target="_blank">Bilibili上关注我</a></b></p1>
                 关注 突斐ZeroFive收看更多Minecraft精彩视频
               </div>
             </li>
@@ -229,57 +227,12 @@
     </div>
     <hr>
     <div class="container text-white bg-dark p-4">
-      <div class="row">
-        <div class="col-6 col-md-8 col-lg-7">
-          <div class="row text-center">
-            <div class="col-sm-6 col-md-4 col-lg-4 col-12">
-              <ul class="list-unstyled">
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-              </ul>
-            </div>
-            <div class="col-sm-6 col-md-4 col-lg-4 col-12">
-              <ul class="list-unstyled">
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-              </ul>
-            </div>
-            <div class="col-sm-6 col-md-4 col-lg-4 col-12">
-              <ul class="list-unstyled">
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-                <li class="btn-link"> <a>Link anchor</a> </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 col-lg-5 col-6">
-          <address>
-            <strong>MyStoreFront, Inc.</strong><br>
-            Indian Treasure Link<br>
-            Quitman, WA, 99110-0219<br>
-            <abbr title="Phone">P:</abbr> (123) 456-7890
-          </address>
-          <address>
-            <strong>Full Name</strong><br>
-            <a href="mailto:#">first.last@example.com</a>
-          </address>
-        </div>
-      </div>
-    </div>
+      
     <footer class="text-center">
       <div class="container">
         <div class="row">
           <div class="col-12">
-            <p>Copyright © MyWebsite. All rights reserved.</p>
+            <p>Copyright © TuFei_ZeroFive All rights reserved.</p>
           </div>
         </div>
       </div>
@@ -289,5 +242,5 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/popper.min.js"></script>
     <script src="js/bootstrap-4.4.1.js"></script>
-  </body>
+  </div></div></body>
 </html>
