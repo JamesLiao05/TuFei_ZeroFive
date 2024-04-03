@@ -1,0 +1,91 @@
+/* Reset default margin and padding */
+body, h1, h2, p, ul, li {
+    margin: 0;
+    padding: 0;
+}
+
+/* Container */
+.container {
+    max-width: 1440px; /* 960px * 1.5 */
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Style header */
+header {
+    background: linear-gradient(to right, #FF6B6B, #FFA07A); /* Gradient */
+    color: #fff;
+    text-align: center;
+    padding: 18px 0;
+}
+header h1 {
+    font-size: 50px; /* 根据需要调整字体大小 */
+}
+/* Style navigation */
+nav {
+    background: linear-gradient(to right, #434343, #000000); /* Gradient */
+    padding: 15px 0;
+    display: flex;
+    justify-content: center; /* 在水平方向上居中对齐 */
+}
+
+nav ul {
+    list-style-type: none;
+    display: flex;
+}
+
+nav ul li {
+    margin-right: 30px;
+}
+
+nav ul li:last-child {
+    margin-right: 0;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Style section */
+section {
+    padding: 75px 0;
+    text-align: center;
+    background-color: #f0f0f0;
+}
+
+/* Section title */
+section h2 {
+    margin-bottom: 30px;
+    font-size: 36px;
+    color: #333;
+}
+
+/* Image gallery */
+.image-gallery {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.image-gallery img {
+    width: 250px;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Hover effect on images */
+.image-gallery img:hover {
+    transform: scale(1.1);
+}
+
+/* Style footer */
+footer {
+    background: linear-gradient(to right, #4B79A1, #283E51); /* Gradient */
+    color: #fff;
+    text-align: center;
+    padding: 30px 0;
+}
