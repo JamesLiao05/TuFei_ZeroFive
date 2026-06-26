@@ -1,0 +1,135 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft Yahei", sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    padding: 70px 30px 40px;
+}
+
+/* 返回主页按钮 */
+.home-btn {
+    position: fixed;
+    top: 25px;
+    left: 25px;
+    padding: 12px 26px;
+    font-size: 18px;
+    background: #2563eb;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transition: all 0.25s ease;
+    z-index: 99;
+}
+.home-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+}
+
+.page-title {
+    text-align: center;
+    font-size: 40px;
+    color: #2d3748;
+    margin-bottom: 50px;
+}
+
+/* 图层容器放大 */
+.layer-box {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 45px;
+    border-radius: 22px;
+    box-shadow:
+        0 2px 4px rgba(0,0,0,0.05),
+        0 12px 30px rgba(0,0,0,0.12);
+    transition: all 0.35s ease;
+}
+.layer-box:hover {
+    transform: translateY(-8px);
+    box-shadow:
+        0 4px 8px rgba(0,0,0,0.06),
+        0 20px 45px rgba(0,0,0,0.18);
+}
+
+/* 图片网格：最多3列，最后一行自动居中 */
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    justify-items: center;
+}
+
+.image-card {
+    width: 100%;
+    max-width: 340px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e8e8e8;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.image-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.image-card img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    display: block;
+}
+
+/* 弹窗遮罩 */
+.preview-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.preview-img {
+    width: 75vw;
+    height: 75vh;
+    object-fit: contain;
+    border-radius: 8px;
+    transition: transform 0.15s ease;
+    transform: scale(1);
+}
+
+.close-btn {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-size: 45px;
+    color: #fff;
+    cursor: pointer;
+    user-select: none;
+}
+
+.arrow {
+    position: absolute;
+    font-size: 55px;
+    color: #fff;
+    cursor: pointer;
+    user-select: none;
+    padding: 0 25px;
+}
+.prev {
+    left: 25px;
+}
+.next {
+    right: 25px;
+}
