@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SFM 1.21.1 终极工业级 IDE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/indent-fold.min.js"></script>
+    
+    <style>
+        :root { 
+            --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #c9d1d9; 
+            --accent: #58a6ff; --success: #3fb950; --error: #f85149; --warn: #d29922;
+            --sidebar-w: 400px;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        header { background: var(--panel); padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        header h1 { margin: 0; font-size: 14px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .badge { background: #238636; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 12px; font-weight: bold; }
+        .badge-warn { background: var(--warn); }
+        .toolbar { display: flex; gap: 6px; flex-wrap: wrap; }
+        .toolbar button { background: #21262d; color: var(--text); border: 1px solid var(--border); padding: 5px 12px; cursor: pointer; border-radius: 6px; font-size: 11px; font-weight: 500; transition: 0.15s; white-space: nowrap; }
+        .toolbar button:hover { background: #30363d; border-color: #8b949e; }
+        
+        .container { display: flex; flex: 1; overflow: hidden; }
+        
+        .sidebar { width: var(--sidebar-w); min-width: 320px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .tabs { display: flex; background: #0d1117; border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; }
+        .tab { padding: 10px 12px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 500; border-bottom: 2px solid transparent; color: #8b949e; white-space: nowrap; transition: 0.15s; }
+        .tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--panel); }
+        .tab-content { flex: 1; overflow-y: auto; padding: 16px; display: none; }
+        .tab-content.active { display: block; }
+        .tab-content::-webkit-scrollbar { width: 6px; }
+        .tab-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 11px; color: #8b949e; margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 7px 10px; background: #0d1117; border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 12px; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 60px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+        .form-group select:focus, .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(88,166,255,0.15); }
+        .form-row { display: flex; gap: 8px; }
+        .form-row .form-group { flex: 1; }
+        
+        .btn-primary { width: 100%; padding: 10px; background: #238636; color: #fff; border: 1px solid rgba(240,246,252,0.1); border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; margin-top: 8px; transition: 0.15s; }
+        .btn-primary:hover { background: #2ea043; transform: translateY(-1px); }
+        
+        .main-area { flex: 1; display: flex; flex-direction: column; position: relative; background: #0d1117; min-width: 0; }
+        .editor-header { padding: 6px 16px; background: #0d1117; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; font-size: 11px; color: #8b949e; flex-shrink: 0; }
+        .editor-header .file-tab { background: var(--panel); padding: 4px 12px; border-radius: 4px; color: var(--text); border: 1px solid var(--border); }
+        .CodeMirror { flex: 1; height: 100% !important; font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px; }
+        
+        .status-bar { height: 28px; background: var(--panel); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: #8b949e; gap: 16px; flex-shrink: 0; }
+        .status-msg { font-weight: 500; display: flex; align-items: center; gap: 5px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .status-msg.error { color: var(--error); }
+        .status-msg.success { color: var(--success); }
+        .status-msg.warn { color: var(--warn); }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+        
+        .CodeMirror-hints { background: #161b22 !important; border: 1px solid var(--border) !important; border-radius: 6px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; max-height: 240px !important; }
+        .CodeMirror-hint { color: var(--text) !important; padding: 5px 10px !important; font-size: 12px !important; }
+        .CodeMirror-hint-active { background: var(--accent) !important; color: #fff !important; }
+        
+        .info-box { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.3); color: #79c0ff; padding: 10px 12px; border-radius: 6px; font-size: 11px; margin-bottom: 16px; line-height: 1.6; }
+        .info-box b { color: var(--accent); }
+        .info-box code { background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #f0883e; }
+        .warn-box { background: rgba(210,153,34,0.08); border-color: rgba(210,153,34,0.3); color: #e3b341; }
+        .warn-box b { color: var(--warn); }
+        .success-box { background: rgba(63,185,80,0.08); border-color: rgba(63,185,80,0.3); color: #56d364; }
+        .success-box b { color: var(--success); }
+        
+        .section-title { font-size: 11px; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+        
+        .toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .toggle-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+        .toggle-row label { font-size: 12px; color: var(--text); margin: 0; text-transform: none; letter-spacing: 0; font-weight: 500; cursor: pointer; }
+        
+        .doc-item { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .doc-item:last-child { border-bottom: none; }
+        .doc-item h4 { margin: 0 0 6px 0; color: var(--accent); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+        .doc-item p { margin: 0 0 4px 0; font-size: 12px; color: #8b949e; line-height: 1.6; }
+        .doc-item code { background: #21262d; padding: 1px 5px; border-radius: 3px; color: #f0883e; font-size: 11px; }
+        .doc-item pre { background: #0d1117; padding: 8px 10px; border-radius: 4px; margin: 6px 0 0 0; font-size: 11px; color: var(--text); overflow-x: auto; border: 1px solid var(--border); }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 100%; max-height: 50vh; border-right: none; border-bottom: 1px solid var(--border); }
+            .container { flex-direction: column; }
+            :root { --sidebar-w: 100%; }
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content.active { animation: fadeIn 0.2s ease; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>⚙️ SFM 1.21.1 IDE <span class="badge">NeoForge</span> <span class="badge badge-warn">v5.1 均分版</span></h1>
+    <div class="toolbar">
+        <button onclick="resetShell()" title="重置基础外壳结构">🔄 重置</button>
+        <button onclick="formatCode()" title="自动格式化缩进">📐 格式化</button>
+        <button onclick="copyCode()" title="复制全部代码">📋 复制</button>
+        <button onclick="validateCode()" title="执行完整语法检查">🔍 检查</button>
+        <button onclick="downloadCode()" title="下载为 .sfm 文件">💾 下载</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('transfer', this)">传输构建</div>
+            <div class="tab" onclick="switchTab('logic', this)">逻辑控制</div>
+            <div class="tab" onclick="switchTab('docs', this)">语法与均分指南</div>
+        </div>
+
+        <!-- ========== 传输构建 ========== -->
+        <div id="tab-transfer" class="tab-content active">
+            <div class="warn-box info-box">
+                ⚠️ <b>避坑警告</b>：SFM 默认的 <code>OUTPUT TO "A", "B"</code> 是<b>优先填充（瀑布流）</b>，A 满了才会给 B！<br>
+                ✅ <b>解决方案</b>：勾选下方的 <b>“严格平均分配”</b>，IDE 会自动将代码拆分为多条独立语句，实现完美均分！
+            </div>
+            
+            <div class="form-group">
+                <label>传输类型</label>
+                <select id="t-type" onchange="updateTransferUI()">
+                    <option value="item">📦 物品 (Items)</option>
+                    <option value="fluid">💧 流体 (Fluids / mb)</option>
+                    <option value="energy">⚡ 能量 (Forge Energy / fe)</option>
+                    <option value="gas">☁️ 化学气体 (Mekanism / mb)</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>单次总数量</label>
+                    <input type="number" id="t-amount" value="64" min="1">
+                </div>
+                <div class="form-group">
+                    <label>资源 ID / 标签过滤</label>
+                    <input type="text" id="t-id" value="*" placeholder="* 或 #forge:ingots/iron">
+                </div>
+            </div>
+
+            <div class="form-group" id="comp-group">
+                <label>1.21.1 数据组件 (可选)</label>
+                <input type="text" id="t-comp" placeholder='{damage:0}'>
+            </div>
+
+            <div class="section-title">来源 (INPUT FROM)</div>
+            <div class="form-group">
+                <label>来源标签 (逗号分隔多来源)</label>
+                <input type="text" id="t-from" value="输入箱" placeholder="箱子A, 箱子B">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>提取面</label>
+                    <select id="t-from-face">
+                        <option value="ANY">任意面</option>
+                        <option value="TOP">顶部 TOP</option>
+                        <option value="BOTTOM">底部 BOTTOM</option>
+                        <option value="NORTH">北 NORTH</option>
+                        <option value="SOUTH">南 SOUTH</option>
+                        <option value="EAST">东 EAST</option>
+                        <option value="WEST">西 WEST</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>提取槽位 (可选)</label>
+                    <input type="text" id="t-from-slot" placeholder="如: 0-8">
+                </div>
+            </div>
+
+            <div class="section-title">目标 (OUTPUT TO)</div>
+            <div class="form-group">
+                <label>目标标签 (逗号分隔多目标)</label>
+                <input type="text" id="t-to" value="机器A, 机器B, 机器C" placeholder="机器A, 机器B, 机器C">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>输入面</label>
+                    <select id="t-to-face">
+                        <option value="ANY">任意面</option>
+                        <option value="TOP">顶部 TOP</option>
+                        <option value="BOTTOM">底部 BOTTOM</option>
+                        <option value="NORTH">北 NORTH</option>
+                        <option value="SOUTH">南 SOUTH</option>
+                        <option value="EAST">东 EAST</option>
+                        <option value="WEST">西 WEST</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>输入槽位 (可选)</label>
+                    <input type="text" id="t-to-slot" placeholder="如: 0">
+                </div>
+            </div>
+
+            <div class="success-box info-box" style="border-color: rgba(63,185,80,0.5);">
+                🎯 <b>严格平均分配模式</b><br>
+                勾选后，IDE 会为每个目标生成独立的传输语句，彻底解决“优先填充”导致的分配不均问题！
+            </div>
+
+            <div class="toggle-row">
+                <input type="checkbox" id="t-round-robin" onchange="toggleRoundRobin()">
+                <label for="t-round-robin">启用严格平均分配 (拆分语句)</label>
+            </div>
+            <div class="form-group" id="rr-group" style="display:none">
+                <label>每个目标的分配数量 (均分量)</label>
+                <input type="number" id="t-rr-amount" value="16" min="1">
+                <p style="font-size:11px; color:#8b949e; margin-top:4px;">💡 例如填 16，则机器A、B、C 每次都会各自精准接收 16 个物品。</p>
+            </div>
+
+            <hr style="border-color: var(--border); margin: 16px 0;">
+
+            <div class="toggle-row">
+                <input type="checkbox" id="t-retention" onchange="toggleRetention()">
+                <label for="t-retention">保留模式 (RETAIN) - 来源至少保留N个</label>
+            </div>
+            <div class="form-group" id="retention-group" style="display:none">
+                <label>保留数量</label>
+                <input type="number" id="t-retain-amount" value="1" min="0">
+            </div>
+
+            <button class="btn-primary" onclick="generateTransfer()">⚡ 生成传输代码</button>
+        </div>
+
+        <!-- ========== 逻辑控制 ========== -->
+        <div id="tab-logic" class="tab-content">
+            <div class="info-box">
+                💡 <b>IF/THEN/ELSE</b>：条件判断。<br>
+                💡 <b>REDSTONE</b>：控制红石接口输出信号。
+            </div>
+
+            <div class="form-group">
+                <label>逻辑类型</label>
+                <select id="l-type" onchange="updateLogicUI()">
+                    <option value="if">🔀 条件判断 (IF / THEN / ELSE)</option>
+                    <option value="redstone">🔴 红石控制 (REDSTONE)</option>
+                </select>
+            </div>
+
+            <div id="logic-fields"></div>
+            <button class="btn-primary" onclick="generateLogic()">⚡ 生成逻辑代码</button>
+        </div>
+
+        <!-- ========== 语法与均分指南 ========== -->
+        <div id="tab-docs" class="tab-content">
+            <div class="doc-item">
+                <h4>🎯 为什么我的物品没有平均分配？</h4>
+                <p>SFM 的 <code>OUTPUT TO "A", "B"</code> 默认是<b>瀑布流（优先填充）</b>。它会拼命把 A 塞满，A 满了才溢出给 B。</p>
+                <p><b>解决办法</b>：在“传输构建”面板勾选 <b>“严格平均分配”</b>，或者手动拆分成多条 <code>INPUT/OUTPUT</code> 语句。</p>
+            </div>
+
+            <div class="doc-item">
+                <h4>📦 拆分手写均分示例</h4>
+                <p>如果不使用 IDE，手写均分代码的正确姿势如下：</p>
+                <pre>-- 将原矿均分给 3 台粉碎机，每台 16 个
+INPUT 16 #forge:ores FROM "原矿箱"
+OUTPUT TO "粉碎机A"
+
+INPUT 16 #forge:ores FROM "原矿箱"
+OUTPUT TO "粉碎机B"
+
+INPUT 16 #forge:ores FROM "原矿箱"
+OUTPUT TO "粉碎机C"</pre>
+            </div>
+
+            <div class="doc-item">
+                <h4>⚡ 能量 (FE) 需要均分吗？</h4>
+                <p><b>不需要！</b> 能量传输没有“堆叠”概念，机器缺多少就会抽多少。直接写 <code>OUTPUT TO "A", "B", "C"</code> 即可，SFM 会自动按需分配能量。</p>
+            </div>
+
+            <div class="doc-item">
+                <h4>💧 流体 (mb) 怎么均分？</h4>
+                <p>流体和物品一样，默认是优先填充。如果要多台机器均分流体，建议勾选“严格平均分配”，或者使用 <b>Mekanism 的机械管道</b>（自带均分功能）。</p>
+            </div>
+
+            <div class="doc-item">
+                <h4>🔧 物理管道均分替代方案</h4>
+                <p>如果目标机器超过 5 台，写 SFM 代码会很长。建议：</p>
+                <p>1. SFM 只负责把物品抽到机器上方的 <b>缓冲箱</b>。</p>
+                <p>2. 使用 <b>Pipez</b> (分配升级) 或 <b>Mekanism</b> (物流分拣器-轮询模式) 进行物理均分。</p>
+            </div>
+
+            <div class="doc-item">
+                <h4>FACE 面指定</h4>
+                <p>解决机器多面口冲突。常见：热力顶出底进、Mekanism 侧面输入。</p>
+                <pre>INPUT FROM "机器" FACE BOTTOM
+OUTPUT TO "机器" FACE TOP</pre>
+            </div>
+
+            <div class="doc-item">
+                <h4>RETAIN 保留模式</h4>
+                <p>来源容器至少保留指定数量，不被抽走。适用于保持机器最低原料。</p>
+                <pre>INPUT 32 * RETAIN 16 FROM "缓冲箱"</pre>
+            </div>
+
+            <div class="doc-item">
+                <h4>1.21.1 数据组件</h4>
+                <p>替代旧版 NBT 语法，直接跟在物品 ID 后面。</p>
+                <pre>INPUT "minecraft:diamond_pickaxe" {damage:0} FROM "工具箱"</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-area">
+        <div class="editor-header">
+            <span class="file-tab">📄 program.sfm</span>
+            <span id="charCount">0 字符</span>
+            <span id="lineCount">0 行</span>
+            <span style="margin-left:auto; color: #8b949e;">Ctrl+Space 补全 | Tab 缩进</span>
+        </div>
+        <textarea id="codeEditor"></textarea>
+    </div>
+</div>
+
+<div class="status-bar">
+    <span id="statusMsg" class="status-msg success"><span class="status-dot"></span> 就绪</span>
+    <span id="errorCount" style="color: var(--error);"></span>
+    <span id="cursorPos" style="margin-left:auto;">行 1, 列 1</span>
+</div>
+
+<script>
+    // ================= 1. 初始化 CodeMirror =================
+    const cm = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+        mode: 'sfm', theme: 'material-darker', lineNumbers: true, matchBrackets: true,
+        autoCloseBrackets: true, styleActiveLine: true, indentUnit: 4, tabSize: 4,
+        foldGutter: true, gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+        extraKeys: {
+            "Ctrl-Space": "autocomplete",
+            "Tab": (cm) => cm.replaceSelection("    ", "end"),
+            "Ctrl-/": (cm) => {
+                const cur = cm.getCursor();
+                const line = cm.getLine(cur.line);
+                if (line.trimStart().startsWith('-- ')) {
+                    cm.replaceRange('', {line: cur.line, ch: line.indexOf('-- ')}, {line: cur.line, ch: line.indexOf('-- ') + 3});
+                } else {
+                    cm.replaceRange('-- ', {line: cur.line, ch: line.search(/\S/)});
+                }
+            }
+        }
+    });
+
+    const defaultShell = `NAME "SFM 自动化程序"
+
+EVERY 20 TICKS DO
+    -- 在此添加传输逻辑
+    
+END
+`;
+    cm.setValue(defaultShell);
+    cm.setCursor({ line: 4, ch: 4 });
+
+    cm.on("cursorActivity", () => {
+        const pos = cm.getCursor();
+        document.getElementById('cursorPos').innerText = `行 ${pos.line + 1}, 列 ${pos.ch + 1}`;
+    });
+    cm.on("change", () => {
+        clearTimeout(window.lintTimer);
+        window.lintTimer = setTimeout(realTimeLint, 400);
+        updateStats();
+    });
+
+    function updateStats() {
+        const val = cm.getValue();
+        document.getElementById('charCount').innerText = `${val.length} 字符`;
+        document.getElementById('lineCount').innerText = `${val.split('\n').length} 行`;
+    }
+    updateStats();
+
+    // ================= 2. 语法高亮与补全 =================
+    CodeMirror.defineSimpleMode("sfm", {
+        start: [
+            {regex: /--.*/, token: "comment"}, {regex: /"(?:[^\\]|\\.)*?"/, token: "string"},
+            {regex: /#[a-zA-Z0-9_\/:]+/, token: "variable-2"}, 
+            {regex: /\b(?:NAME|EVERY|TICKS|DO|INPUT|OUTPUT|FROM|TO|IF|HAS|THEN|ELSE|END|REDSTONE|ON|OFF|PULSE|FACE|TOP|BOTTOM|NORTH|SOUTH|EAST|WEST|RETAIN|SLOT)\b/, token: "keyword"},
+            {regex: /\b(?:mb|fe|rf)\b/, token: "atom"}, {regex: /\{.*?\}/, token: "qualifier"},
+            {regex: /\d+/, token: "number"}, {regex: /[<>=!]+/, token: "operator"}, {regex: /\*/, token: "atom"}
+        ]
+    });
+
+    const sfmKeywords = ["NAME", "EVERY", "TICKS", "DO", "INPUT", "OUTPUT", "FROM", "TO", "IF", "HAS", "THEN", "ELSE", "END", "REDSTONE", "ON", "OFF", "PULSE", "FACE", "TOP", "BOTTOM", "NORTH", "SOUTH", "EAST", "WEST", "RETAIN", "SLOT", "mb", "fe", "*"];
+    CodeMirror.registerHelper("hint", "sfm", function(cm) {
+        const cur = cm.getCursor(), token = cm.getTokenAt(cur);
+        let list = token.string.startsWith('"') ? ['"minecraft:iron_ingot"', '"minecraft:water"'] : 
+                   token.string.startsWith('#') ? ['#forge:ingots', '#forge:ores', '#forge:dusts'] : sfmKeywords;
+        list = list.filter(item => item.toLowerCase().startsWith(token.string.toLowerCase()));
+        return { list, from: CodeMirror.Pos(cur.line, token.start), to: CodeMirror.Pos(cur.line, cur.ch) };
+    });
+    cm.on("inputRead", (cm, change) => { if (change.text[0] && /[A-Za-z"#*]/.test(change.text[0])) cm.showHint({ hint: CodeMirror.hint.sfm, completeSingle: false }); });
+
+    // ================= 3. 实时语法检查 =================
+    function realTimeLint() {
+        const lines = cm.getValue().split('\n');
+        let errors = [], stack = [], hasName = false, hasEvery = false;
+
+        for (let i = 0; i < lines.length; i++) {
+            const trim = lines[i].trim();
+            if (!trim || trim.startsWith('--')) continue;
+            if (trim.startsWith('NAME ')) hasName = true;
+            if (trim.startsWith('EVERY ')) hasEvery = true;
+            
+            if (trim.startsWith('EVERY ') && !trim.match(/EVERY\s+\d+\s+TICKS\s+DO/)) errors.push(`行 ${i+1}: EVERY 格式错误`);
+            if (trim.startsWith('IF ') && !trim.endsWith(' THEN')) errors.push(`行 ${i+1}: IF 必须以 THEN 结尾`);
+            
+            if ((trim.startsWith('INPUT') || trim.startsWith('OUTPUT') || trim.startsWith('REDSTONE')) && stack.length === 0) {
+                errors.push(`行 ${i+1}: 动作语句必须在 EVERY/IF 块内`);
+            }
+
+            if (trim.match(/DO$/) || trim.match(/THEN$/)) stack.push(i+1);
+            if (trim === 'END') { if (stack.length === 0) errors.push(`行 ${i+1}: 多余的 END`); else stack.pop(); }
+        }
+
+        const val = cm.getValue().trim();
+        if (val.length > 0) {
+            if (!hasName) errors.push('全局: 缺少 NAME 声明');
+            if (!hasEvery) errors.push('全局: 缺少 EVERY 循环');
+        }
+        if (stack.length > 0) errors.push(`全局: 缺少 ${stack.length} 个 END`);
+
+        const msgEl = document.getElementById('statusMsg');
+        const errEl = document.getElementById('errorCount');
+        if (errors.length > 0) { 
+            msgEl.innerHTML = `<span class="status-dot"></span> ❌ ${errors[0]}`; 
+            msgEl.className = 'status-msg error'; 
+            errEl.innerText = `${errors.length} 个问题`;
+        } else { 
+            msgEl.innerHTML = `<span class="status-dot"></span> ✅ 结构完美，可直接放入游戏！`; 
+            msgEl.className = 'status-msg success'; 
+            errEl.innerText = '';
+        }
+    }
+
+    // ================= 4. UI 切换与构建逻辑 =================
+    function switchTab(tabId, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        el.classList.add('active'); 
+        document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    function updateTransferUI() {
+        const type = document.getElementById('t-type').value;
+        document.getElementById('comp-group').style.display = type === 'item' ? 'block' : 'none';
+        const defaults = { item: 64, fluid: 1000, energy: 10000, gas: 1000 };
+        document.getElementById('t-amount').value = defaults[type];
+    }
+    
+    function toggleRoundRobin() {
+        document.getElementById('rr-group').style.display = document.getElementById('t-round-robin').checked ? 'block' : 'none';
+    }
+    
+    function toggleRetention() {
+        document.getElementById('retention-group').style.display = document.getElementById('t-retention').checked ? 'block' : 'none';
+    }
+
+    function updateLogicUI() {
+        const type = document.getElementById('l-type').value;
+        const container = document.getElementById('logic-fields');
+        if (type === 'if') {
+            container.innerHTML = `
+                <div class="form-group"><label>检查标签</label><input type="text" id="l-label" value="箱子"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>比较符</label><select id="l-op"><option>></option><option><</option><option>==</option><option>>=</option><option><=</option></select></div>
+                    <div class="form-group"><label>数量</label><input type="number" id="l-amount" value="64"></div>
+                </div>
+                <div class="form-group"><label>物品ID (填 * 代表任意)</label><input type="text" id="l-item" value="*"></div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="form-group"><label>红石接口标签</label><input type="text" id="l-label" value="控制线"></div>
+                <div class="form-group"><label>动作</label><select id="l-op" onchange="document.getElementById('pulse-group').style.display=this.value==='PULSE'?'block':'none'"><option>ON</option><option>OFF</option><option>PULSE</option></select></div>
+                <div class="form-group" id="pulse-group" style="display:none"><label>脉冲持续 (Ticks)</label><input type="number" id="l-ticks" value="10"></div>
+            `;
+        }
+    }
+
+    // ================= 5. 代码生成核心 (含均分逻辑) =================
+    function formatLabels(str) {
+        return str.split(',').map(s => `"${s.trim()}"`).filter(s => s !== '""').join(', ');
+    }
+
+    function generateTransfer() {
+        const type = document.getElementById('t-type').value;
+        let id = document.getElementById('t-id').value.trim();
+        const comp = document.getElementById('t-comp').value.trim();
+        const from = formatLabels(document.getElementById('t-from').value);
+        const fromFace = document.getElementById('t-from-face').value;
+        const fromSlot = document.getElementById('t-from-slot').value.trim();
+        const retain = document.getElementById('t-retention').checked;
+        const retainAmt = document.getElementById('t-retain-amount').value;
+        
+        const toFace = document.getElementById('t-to-face').value;
+        const toSlot = document.getElementById('t-to-slot').value.trim();
+        
+        const isRR = document.getElementById('t-round-robin').checked;
+        const toRaw = document.getElementById('t-to').value;
+        const toLabels = toRaw.split(',').map(s => s.trim()).filter(s => s);
+
+        // 辅助函数：构建 INPUT 字符串
+        function buildInputStr(amt) {
+            let str = `INPUT ${amt}`;
+            if (type === 'fluid' || type === 'gas') str += ` mb`;
+            else if (type === 'energy') str += ` fe`;
+
+            let localId = id;
+            if (localId !== '*') {
+                if (!localId.startsWith('#') && !localId.startsWith('"')) localId = `"${localId}"`;
+                str += ` ${localId}`;
+                if (type === 'item' && comp) str += ` ${comp}`;
+            } else {
+                str += ` *`;
+            }
+
+            if (retain) str += ` RETAIN ${retainAmt}`;
+            str += ` FROM ${from}`;
+            if (fromFace !== 'ANY') str += ` FACE ${fromFace}`;
+            if (fromSlot) str += ` SLOT ${fromSlot}`;
+            return str;
+        }
+
+        // 辅助函数：构建 OUTPUT 字符串
+        function buildOutputStr(targetLabel) {
+            let str = `OUTPUT TO ${targetLabel}`;
+            if (toFace !== 'ANY') str += ` FACE ${toFace}`;
+            if (toSlot) str += ` SLOT ${toSlot}`;
+            return str;
+        }
+
+        // 核心逻辑：判断是否启用严格均分
+        if (isRR && toLabels.length > 1) {
+            const rrAmt = document.getElementById('t-rr-amount').value;
+            let blocks = [];
+            const inputStr = buildInputStr(rrAmt);
+            
+            for (let label of toLabels) {
+                const outStr = buildOutputStr(`"${label}"`);
+                blocks.push(`${inputStr}\n${outStr}`);
+            }
+            insertCode(blocks.join('\n\n'));
+            setStatus(`✅ 已生成 ${toLabels.length} 条独立均分语句！`, 'success');
+        } else {
+            // 默认模式（优先填充/瀑布流）
+            const amt = document.getElementById('t-amount').value;
+            const inputStr = buildInputStr(amt);
+            const toFormatted = formatLabels(toRaw);
+            const outStr = buildOutputStr(toFormatted);
+            
+            insertCode(`${inputStr}\n${outStr}`);
+            if (toLabels.length > 1) {
+                setStatus(`⚠️ 已生成！注意：多目标默认为“优先填充”，如需均分请勾选“严格平均分配”`, 'warn');
+            } else {
+                setStatus('✅ 代码已安全插入！', 'success');
+            }
+        }
+    }
+
+    function generateLogic() {
+        const type = document.getElementById('l-type').value;
+        let code = "";
+        if (type === 'if') {
+            const label = document.getElementById('l-label').value.trim();
+            const op = document.getElementById('l-op').value;
+            const amt = document.getElementById('l-amount').value;
+            let item = document.getElementById('l-item').value.trim();
+            if (item !== '*' && !item.startsWith('#') && !item.startsWith('"')) item = `"${item}"`;
+            code = `IF "${label}" HAS ${op} ${amt} ${item} THEN\n    -- 满足条件时执行\nELSE\n    -- 不满足时执行\nEND`;
+        } else {
+            const label = document.getElementById('l-label').value.trim();
+            const op = document.getElementById('l-op').value;
+            code = `REDSTONE "${label}" ${op}`;
+            if (op === 'PULSE') code += ` ${document.getElementById('l-ticks').value} TICKS`;
+        }
+        insertCode(code);
+    }
+
+    function insertCode(code) {
+        const cursor = cm.getCursor();
+        const lines = cm.getValue().split('\n');
+        let stack = 0;
+        for (let i = 0; i < cursor.line; i++) {
+            const trim = lines[i].trim();
+            if (trim.match(/DO$/) || trim.match(/THEN$/)) stack++;
+            if (trim === 'END') stack--;
+        }
+        if (stack <= 0) {
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim().match(/DO$/)) { cm.setCursor({ line: i + 1, ch: 0 }); break; }
+            }
+        }
+        const curLine = cm.getLine(cm.getCursor().line) || '';
+        const curIndent = curLine.match(/^(\s*)/)[1].length;
+        const indent = ' '.repeat(Math.max(curIndent, 4));
+        const indentedCode = code.split('\n').map(l => l ? indent + l : '').join('\n');
+        const prefix = cm.getCursor().ch > 0 ? '\n' : '';
+        cm.replaceSelection(prefix + indentedCode + '\n');
+        cm.focus();
+    }
+
+    // ================= 6. 辅助功能 =================
+    function resetShell() {
+        if (confirm('将清空所有代码并重置基础外壳，确定吗？')) {
+            cm.setValue(defaultShell);
+            cm.setCursor({ line: 4, ch: 4 });
+            setStatus('🔄 外壳已重置', 'success');
+        }
+    }
+
+    function formatCode() {
+        let lines = cm.getValue().split('\n'), formatted = [], indent = 0;
+        for (let line of lines) {
+            let trim = line.trim();
+            if (!trim) { formatted.push(''); continue; }
+            if (trim === 'END' || trim === 'ELSE') indent = Math.max(0, indent - 1);
+            formatted.push('    '.repeat(indent) + trim);
+            if (trim.match(/DO$/) || trim.match(/THEN$/) || trim === 'ELSE') indent++;
+        }
+        cm.setValue(formatted.join('\n'));
+        setStatus('📐 代码已格式化', 'success');
+    }
+
+    function copyCode() { navigator.clipboard.writeText(cm.getValue()).then(() => setStatus('📋 已复制到剪贴板', 'success')); }
+    function validateCode() { realTimeLint(); }
+    function downloadCode() {
+        const blob = new Blob([cm.getValue()], { type: 'text/plain' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'program.sfm'; a.click();
+        setStatus('💾 文件已下载', 'success');
+    }
+    function setStatus(msg, type) { 
+        const el = document.getElementById('statusMsg'); 
+        el.innerHTML = `<span class="status-dot"></span> ${msg}`; 
+        el.className = 'status-msg ' + (type || ''); 
+    }
+
+    updateTransferUI();
+    updateLogicUI();
+    realTimeLint();
+</script>
+</body>
+</html>
