@@ -23,8 +23,8 @@
   <!-- 背景遮罩 -->
   <div class="bg-overlay"></div>
 
-  <!-- 右上角管理员入口 -->
-  <button class="admin-entry-btn" onclick="showAdminLogin()" title="管理员登录">🔐</button>
+  <!-- 右上角入口：未登录显示登录，登录后显示登出 -->
+  <button id="adminEntryBtn" class="admin-entry-btn" onclick="handleAdminEntry()" title="管理员登录">🔐</button>
 
   <div class="container">  
     
@@ -41,7 +41,7 @@
         <a href="MC/SFM.html" class="button">⛏️ MC工具</a>
     </div>
 
-    <!-- 服主碎碎念 -->
+    <!-- 站主发言 -->
     <div class="divider"><span>💡 站主发言</span></div> 
     <div class="info-card">
         <p>欢迎大家</p>
@@ -93,6 +93,10 @@
       <div class="panel-header">
           <h3>📜 全部弹幕</h3>
           <button class="panel-close-btn" onclick="closeDanmakuPanel()">✕</button>
+      </div>
+      <!-- 仅登录后显示的退出按钮 -->
+      <div id="adminLogoutBar" class="admin-logout-bar">
+          <button onclick="adminLogout()" class="admin-logout-btn">🚪 退出登录</button>
       </div>
       <div class="panel-list" id="panelDanmakuList">
           <p style="text-align:center; color:#aaa;">点击加载弹幕...</p>
@@ -306,6 +310,28 @@
       }
       .panel-close-btn:hover { color: #fff; }
 
+      /* 侧边栏登出栏 */
+      .admin-logout-bar {
+          display: none;
+          padding: 0 20px 15px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      .admin-logout-btn {
+          width: 100%;
+          padding: 8px;
+          background: #ff4757;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 13px;
+          font-weight: bold;
+      }
+      .admin-logout-btn:hover { background: #ff6b81; }
+      .danmaku-panel.admin-active .admin-logout-bar {
+          display: block;
+      }
+
       .panel-list {
           flex: 1;
           overflow-y: auto;
@@ -434,6 +460,7 @@
       const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       let lastSendTime = 0; 
+      let isAdminLoggedIn = false;
 
       // 获取游客ID
       function getGuestId() {
@@ -445,9 +472,22 @@
           return guestId;
       }
 
+      // 右上角按钮点击：登录/登出切换
+      function handleAdminEntry() {
+          if (isAdminLoggedIn) {
+              adminLogout();
+          } else {
+              showAdminLogin();
+          }
+      }
+
       // 关闭管理员弹窗
       function closeAdminPanel() {
           document.getElementById('adminSection').style.display = 'none';
+          // 兜底重置按钮状态
+          const btn = document.getElementById('loginBtn');
+          btn.innerText = '登录';
+          btn.disabled = false;
       }
 
       // ================= 1. 发送弹幕（支持 Enter 快捷键） =================
@@ -595,7 +635,10 @@
           const btn = document.getElementById('loginBtn');
           btn.innerText = '登录中...';
           btn.disabled = true;
+
           const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          
+          // 无论成功失败，都重置按钮状态（成功会自动关弹窗）
           if (error) {
               alert('登录失败：' + error.message);
               btn.innerText = '登录';
@@ -605,7 +648,7 @@
 
       async function adminLogout() {
           await supabaseClient.auth.signOut();
-          alert('已退出管理');
+          alert('已退出登录');
       }
 
       // 删除弹幕
@@ -637,25 +680,37 @@
           // 登录状态监听
           supabaseClient.auth.onAuthStateChange((event, session) => {
               const panel = document.getElementById('danmakuPanel');
+              const entryBtn = document.getElementById('adminEntryBtn');
               
               if (event === 'SIGNED_IN' && session) {
+                  isAdminLoggedIn = true;
                   alert('登录成功');
                   closeAdminPanel();
                   panel.classList.add('admin-active');
+                  entryBtn.innerText = '🚪';
+                  entryBtn.title = '退出登录';
                   // 侧边栏打开时刷新列表显示删除按钮
                   if (panel.classList.contains('open')) {
                       loadPanelDanmaku();
                   }
               } else if (event === 'SIGNED_OUT') {
+                  isAdminLoggedIn = false;
                   panel.classList.remove('admin-active');
+                  entryBtn.innerText = '🔐';
+                  entryBtn.title = '管理员登录';
                   closeAdminPanel();
               }
           });
 
           // 初始化会话校验
           supabaseClient.auth.getSession().then(({ data: { session } }) => {
+              const panel = document.getElementById('danmakuPanel');
+              const entryBtn = document.getElementById('adminEntryBtn');
               if (session) {
-                  document.getElementById('danmakuPanel').classList.add('admin-active');
+                  isAdminLoggedIn = true;
+                  panel.classList.add('admin-active');
+                  entryBtn.innerText = '🚪';
+                  entryBtn.title = '退出登录';
               }
           });
       });
