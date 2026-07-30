@@ -73,14 +73,32 @@
   
   <!-- 留言板核心逻辑 -->
   <script>
-      // ⚠️⚠️⚠️ 关键步骤：请在这里填入你的 Supabase URL 和 anon key！
+      // ⚠️⚠️⚠️ 关键步骤：你的 Supabase URL 和 anon key
       const SUPABASE_URL = 'https://iezmnejfdaorhusjxggs.supabase.co'; 
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imllem1uZWpmZGFvcmh1c2p4Z2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNzA2NTMsImV4cCI6MjEwMDk0NjY1M30.MLRHHHGu5ZyjdnTVAT5fE6AM03zjURDdfupJIcuZXM0'; 
 
       const { createClient } = supabase;
       const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+      // 🛡️ 新增：定义一个全局变量，用来记录“上一次发送留言的时间”
+      // 初始值为 0，代表很久以前
+      let lastSendTime = 0; 
+
       async function submitTufeiMsg() {
+          // 🛡️ 新增：防连点/防刷屏检查
+          const now = Date.now(); // 获取当前时间（毫秒）
+          
+          // 如果当前时间 减去 上次发送时间 小于 3000毫秒（也就是3秒）
+          if (now - lastSendTime < 3000) {
+              alert('手速太快啦！请休息 3 秒后再发哦~ 🐢');
+              return; // 直接停止执行，不往下走
+          }
+          
+          // 如果通过了时间检查，就把“上次发送时间”更新为“现在”
+          lastSendTime = now;
+          // 🛡️ 防连点逻辑结束
+
+          // --- 下面是你原来的正常逻辑 ---
           const input = document.getElementById('tufeiMsgInput');
           const content = input.value.trim();
           if (!content) return alert('留言不能为空哦！');
