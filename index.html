@@ -1,25 +1,134 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <link rel="shortcut icon" href="favicon.ico" />
-        <title>突斐ZeroFive的web | 个人网站 热爱Minecraft</title>
-        <meta name="baidu-site-verification" content="code-z6oklNbLst" />
-        <meta name="突斐ZeroFive" content="HTML, CSS, XML, XHTML, JavaScript">
-        <meta http-equiv ="content-language" content ="zh-cn">
-        <meta name="description" contenr="突斐ZeroFive的Minecraft个人网站,里面有联机地址，资源分享和其他的好东西，你可以关注我获取更多关于我的世界的内容，我也是个小人物哦。MC服务器这种东西，个人认为是要口口相传的服务器才管用，如果只是公开宣传，效率真的不会太高。因为平时就算是什么大服务器在bbs上面有宣传，如果我的好基友不在里面，那就真的没什么意思，因为联机本身的意义就在于和其他玩家的互动，懂吧。">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="zhuye.css">
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="favicon.ico" />
+    <title>突斐ZeroFive的web | 个人网站 热爱Minecraft</title>
+    <meta name="baidu-site-verification" content="code-z6oklNbLst" />
+    <meta name="description" content="突斐ZeroFive的Minecraft个人网站,里面有联机地址，资源分享和其他的好东西。">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 引入 Google 字体，让中文和标题更好看 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="zhuye.css">
 </head>
 <body>
+
+  <!-- 背景遮罩，让前景文字更清晰 -->
+  <div class="bg-overlay"></div>
+
   <div class="container">  
+    
+    <!-- 头部区域 -->
     <div class="header-image"></div>  
-    <div class="header-text">突斐ZeroFive</div>   
-  <div class="divider"></div>  
-  <a href="PD/1.html" class="button">视频频道</a>
-  <a href="SJZ/sjz.html" class="button">三角洲</a>
-  <a href="MC/SFM.html" class="button">MC工具</a>
-  <div class="divider"></div> 
-  <div class="footer">网站属于：TUFEIZEROFIVE - 突斐ZeroFive</div>
-</div>
+    <h1 class="header-text">突斐ZeroFive</h1>
+    <p class="subtitle">热爱 Minecraft，分享游戏与生活的点滴</p>
+    
+    <!-- 导航按钮区 -->
+    <div class="divider"><span>🎮 探索频道</span></div>  
+    <div class="nav-buttons">
+        <a href="PD/1.html" class="button">📺 视频频道</a>
+        <a href="SJZ/sjz.html" class="button">🔫 三角洲</a>
+        <a href="MC/SFM.html" class="button">⛏️ MC工具</a>
+    </div>
+
+    <!-- 新增：关于服务器的小贴士卡片 -->
+    <div class="divider"><span>💡 服主碎碎念</span></div> 
+    <div class="info-card">
+        <p>MC服务器这种东西，个人认为是要<strong>口口相传</strong>的才管用。如果只是公开宣传，效率真的不会太高。</p>
+        <p>就算是什么大服务器在 BBS 上有宣传，如果我的好基友不在里面，那就真的没什么意思。</p>
+        <p class="highlight">因为联机本身的意义，就在于和其他玩家的互动，懂吧？</p>
+    </div>
+
+    <!-- 留言板区域 -->
+    <div class="divider"><span>💬 玩家留言板</span></div> 
+    <div class="tufei-msg-box">
+        <div class="msg-input-group">
+            <input type="text" id="tufeiMsgInput" class="tufei-msg-input" placeholder="留下你的足迹，或写上你的 MC ID...">
+            <button onclick="submitTufeiMsg()" class="tufei-msg-btn">发送</button>
+        </div>
+        <div id="tufeiMsgList" class="tufei-msg-list">
+            <p class="loading-text">正在连接云端数据库...</p>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <div class="divider"></div> 
+    <div class="footer">
+        <p>© 2024 TUFEIZEROFIVE - 突斐ZeroFive</p>
+        <div class="footer-links">
+            <a href="#">Bilibili</a> 
+            <span class="dot">•</span> 
+            <a href="#">GitHub</a> 
+            <span class="dot">•</span> 
+            <a href="#">QQ交流群</a>
+        </div>
+    </div>
+    
+  </div>
+
+  <!-- 引入 Supabase 官方 JS 库 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 留言板核心逻辑 -->
+  <script>
+      // ⚠️⚠️⚠️ 关键步骤：请在这里填入你的 Supabase URL 和 anon key！
+      const SUPABASE_URL = '替换为你的_SUPABASE_URL'; 
+      const SUPABASE_ANON_KEY = '替换为你的_ANON_KEY'; 
+
+      const { createClient } = supabase;
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      async function submitTufeiMsg() {
+          const input = document.getElementById('tufeiMsgInput');
+          const content = input.value.trim();
+          if (!content) return alert('留言不能为空哦！');
+
+          const btn = document.querySelector('.tufei-msg-btn');
+          btn.innerText = '发送中...';
+          btn.disabled = true;
+
+          const { error } = await supabaseClient.from('messages').insert([{ content }]);
+
+          if (error) {
+              console.error('提交失败:', error);
+              alert('提交失败，请检查网络');
+          } else {
+              input.value = '';
+              loadTufeiMsgs();
+          }
+          btn.innerText = '发送';
+          btn.disabled = false;
+      }
+
+      async function loadTufeiMsgs() {
+          const listDiv = document.getElementById('tufeiMsgList');
+          const { data, error } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: false }).limit(20);
+
+          if (error) {
+              listDiv.innerHTML = '<p class="loading-text" style="color:red;">加载失败</p>';
+              return;
+          }
+
+          if (data.length === 0) {
+              listDiv.innerHTML = '<p class="loading-text">还没有留言，快来抢沙发！</p>';
+          } else {
+              listDiv.innerHTML = data.map(msg => `
+                  <div class="tufei-msg-item">
+                      <span class="msg-text">${escapeHtml(msg.content)}</span>
+                      <span class="tufei-msg-time">${new Date(msg.created_at).toLocaleString()}</span>
+                  </div>
+              `).join('');
+          }
+      }
+
+      function escapeHtml(text) {
+          const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+          return text.replace(/[&<>"']/g, m => map[m]);
+      }
+
+      document.addEventListener('DOMContentLoaded', loadTufeiMsgs);
+  </script>
 </body>
 </html>
