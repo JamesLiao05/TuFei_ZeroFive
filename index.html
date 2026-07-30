@@ -284,19 +284,37 @@
           return `${month}-${day} ${hours}:${minutes}`;
       }
 
-      async function loadPanelDanmaku() {
-          const list = document.getElementById('panelDanmakuList');
-          list.innerHTML = '<p style="text-align:center; color:#aaa;">加载中...</p>';
+            async function loadDanmaku() {
+          const container = document.getElementById('tufeiMsgList');
+          container.className = 'danmaku-container'; 
+          container.innerHTML = '<p class="loading-text">弹幕装填中...</p>';
+
           const { data, error } = await supabaseClient.from('messages')
-              .select('content, created_at').order('created_at', { ascending: false }).limit(100);
-          if (error) { list.innerHTML = '<p style="color:red; text-align:center;">加载失败</p>'; return; }
-          if (!data || data.length === 0) { list.innerHTML = '<p style="text-align:center; color:#aaa;">暂无弹幕</p>'; return; }
-          list.innerHTML = data.map(msg => `
-              <div class="panel-danmaku-card">
-                  <div class="panel-danmaku-text">${escapeHtml(msg.content)}</div>
-                  <div class="panel-danmaku-time">🕒 ${formatTimeToMinute(msg.created_at)}</div>
-              </div>`).join('');
+              .select('content').order('created_at', { ascending: false }).limit(30);
+
+          // 🌟 修改：把具体的 error.message 显示出来
+          if (error || !data) { 
+              console.error('弹幕加载错误:', error);
+              container.innerHTML = `<p class="loading-text" style="color:red;">弹幕故障: ${error ? error.message : '未知错误'}</p>`; 
+              return; 
+          }
+          
+          container.innerHTML = '';
+          if (data.length === 0) { container.innerHTML = '<p class="loading-text">还没有弹幕，快来发射第一条！</p>'; return; }
+
+          const containerHeight = container.offsetHeight || 220;
+          data.forEach((msg) => {
+              const div = document.createElement('div');
+              div.className = 'danmaku-item'; div.innerText = msg.content;
+              div.style.top = `${Math.random() * Math.max(10, containerHeight - 40)}px`;
+              const duration = 8 + Math.random() * 8;
+              div.style.animationDuration = `${duration}s`;
+              div.style.animationDelay = `-${Math.random() * duration}s`;
+              container.appendChild(div);
+              div.addEventListener('animationend', () => div.remove());
+          });
       }
+
 
       // ================= 4. 管理员逻辑 =================
       function showAdminLogin() {
