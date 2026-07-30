@@ -15,13 +15,16 @@
 </head>
 <body>
 
-  <!-- 全屏弹幕层（背景层，不遮挡点击） -->
+  <!-- 全屏弹幕层 -->
   <div id="tufeiMsgList" class="danmaku-container">
       <p class="loading-text">正在连接云端数据库...</p>
   </div>
 
   <!-- 背景遮罩 -->
   <div class="bg-overlay"></div>
+
+  <!-- 右上角管理员入口 -->
+  <button class="admin-entry-btn" onclick="showAdminLogin()" title="管理员登录">🔐</button>
 
   <div class="container">  
     
@@ -65,14 +68,12 @@
             <a href="#">GitHub</a> 
             <span class="dot">•</span> 
             <a href="#">QQ交流群</a>
-            <span class="dot">•</span> 
-            <a href="javascript:void(0)" onclick="showAdminLogin()" style="color: #666; font-size: 12px;">管理</a>
         </div>
     </div>
     
   </div>
 
-  <!-- 管理员登录弹窗（美化版） -->
+  <!-- 管理员登录弹窗 -->
   <div id="adminSection" class="admin-section">
       <div class="admin-box">
           <div id="loginForm">
@@ -82,16 +83,10 @@
               <button id="loginBtn" onclick="adminLogin()" class="admin-btn">登录</button>
               <button onclick="closeAdminPanel()" class="admin-btn cancel-btn">关闭</button>
           </div>
-          <div id="managePanel" style="display:none;">
-              <h3>🛠️ 弹幕管理中心</h3>
-              <p style="font-size:12px; color:#aaa; margin-bottom: 10px;">点击“删除”即可移除违规弹幕。</p>
-              <div id="msgManageList" class="msg-manage-list"></div>
-              <button onclick="adminLogout()" class="admin-btn logout-btn">退出登录</button>
-          </div>
       </div>
   </div>
 
-  <!-- 侧边栏悬浮按钮与面板 -->
+  <!-- 侧边栏弹幕面板 -->
   <button class="danmaku-toggle-btn" onclick="openDanmakuPanel()" title="查看所有弹幕">💬</button>
   <div class="panel-overlay" id="panelOverlay" onclick="closeDanmakuPanel()"></div>
   <div class="danmaku-panel" id="danmakuPanel">
@@ -144,13 +139,37 @@
           margin: 0;
       }
 
-      /* 页面内容层级，保证在弹幕上方 */
+      /* 页面内容层级 */
       .container {
           position: relative;
           z-index: 2;
       }
 
-      /* --- 美化管理员弹窗 --- */
+      /* --- 右上角管理员入口 --- */
+      .admin-entry-btn {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: #fff;
+          font-size: 20px;
+          border: none;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+          cursor: pointer;
+          z-index: 998;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.2s;
+      }
+      .admin-entry-btn:hover {
+          transform: scale(1.1);
+      }
+
+      /* --- 管理员登录弹窗 --- */
       .admin-section {
           position: fixed;
           top: 0;
@@ -217,44 +236,8 @@
           background: rgba(255,255,255,0.1);
           margin-bottom: 0;
       }
-      .admin-btn.logout-btn {
-          background: #ff4757;
-          margin-top: 15px;
-          margin-bottom: 0;
-      }
-      .msg-manage-list {
-          max-height: 320px;
-          overflow-y: auto;
-          margin-top: 10px;
-      }
-      .msg-manage-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background: rgba(255,255,255,0.08);
-          padding: 10px 12px;
-          border-radius: 6px;
-          margin-bottom: 8px;
-      }
-      .msg-manage-text {
-          flex: 1;
-          margin-right: 10px;
-          word-break: break-all;
-          font-size: 14px;
-      }
-      .delete-btn {
-          padding: 5px 12px;
-          background: #ff4757;
-          color: #fff;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 12px;
-          white-space: nowrap;
-      }
-      .delete-btn:hover { background: #ff6b81; }
 
-      /* --- 侧边栏样式（保留原逻辑） --- */
+      /* --- 侧边栏样式 --- */
       .danmaku-toggle-btn {
           position: fixed;
           right: 15px;
@@ -346,12 +329,96 @@
           line-height: 1.5; 
           margin-bottom: 8px; 
       }
+      .panel-danmaku-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
       .panel-danmaku-time { 
           color: #888;
           font-size: 12px;
-          text-align: left; 
+      }
+
+      /* 删除按钮：仅管理员登录后显示 */
+      .danmaku-delete-btn {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: #ff4757;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+          font-size: 14px;
+          line-height: 1;
+          padding: 0;
+          transition: background 0.2s;
+      }
+      .danmaku-delete-btn:hover {
+          background: #ff6b81;
+      }
+      .danmaku-panel.admin-active .danmaku-delete-btn {
+          display: flex;
       }
       
+      /* --- 手机端适配优化 --- */
+      @media (max-width: 768px) {
+          .container {
+              padding: 0 15px;
+              box-sizing: border-box;
+          }
+          .header-text {
+              font-size: 32px;
+              margin-top: 60px;
+          }
+          .subtitle {
+              font-size: 14px;
+          }
+          .nav-buttons {
+              flex-direction: column;
+              gap: 10px;
+          }
+          .nav-buttons .button {
+              width: 100%;
+              box-sizing: border-box;
+              text-align: center;
+          }
+          .msg-input-group {
+              flex-direction: column;
+              gap: 10px;
+          }
+          .tufei-msg-input, .tufei-msg-btn {
+              width: 100%;
+              box-sizing: border-box;
+          }
+          .admin-entry-btn {
+              width: 38px;
+              height: 38px;
+              top: 15px;
+              right: 15px;
+              font-size: 18px;
+          }
+          .danmaku-toggle-btn {
+              width: 44px;
+              height: 44px;
+              font-size: 20px;
+              right: 15px;
+          }
+          .info-card {
+              padding: 15px;
+              font-size: 14px;
+          }
+          .danmaku-item {
+              font-size: 14px;
+              padding: 6px 12px;
+          }
+          .footer {
+              font-size: 12px;
+          }
+      }
+
       @media (max-width: 400px) {
           .danmaku-panel { width: 100%; right: -100%; }
       }
@@ -383,7 +450,7 @@
           document.getElementById('adminSection').style.display = 'none';
       }
 
-      // ================= 1. 发送弹幕 =================
+      // ================= 1. 发送弹幕（支持 Enter 快捷键） =================
       async function submitTufeiMsg() {
           const now = Date.now();
           if (now - lastSendTime < 3000) return alert('手速太快啦！请休息 3 秒后再发哦~ 🐢');
@@ -409,7 +476,11 @@
               }
           } else {
               input.value = '';
-              addSingleDanmaku(content); 
+              addSingleDanmaku(content);
+              // 如果侧边栏打开，同步刷新列表
+              if (document.getElementById('danmakuPanel').classList.contains('open')) {
+                  loadPanelDanmaku();
+              }
           }
           
           btn.innerText = '发射';
@@ -485,13 +556,13 @@
           return `${month}-${day} ${hours}:${minutes}`;
       }
 
-      // 侧边栏弹幕列表加载
+      // 侧边栏弹幕列表加载（含删除按钮）
       async function loadPanelDanmaku() {
           const listDom = document.getElementById('panelDanmakuList');
           listDom.innerHTML = '<p style="text-align:center; color:#aaa;">加载中……</p>';
           const { data, error } = await supabaseClient
               .from('messages')
-              .select('content,created_at')
+              .select('id, content, created_at')
               .order('created_at', {ascending:false})
               .limit(100);
           if(error){
@@ -505,7 +576,10 @@
           listDom.innerHTML = data.map(item=>`
               <div class="panel-danmaku-card">
                   <div class="panel-danmaku-text">${escapeHtml(item.content)}</div>
-                  <div class="panel-danmaku-time">${formatTimeToMinute(item.created_at)}</div>
+                  <div class="panel-danmaku-footer">
+                      <div class="panel-danmaku-time">${formatTimeToMinute(item.created_at)}</div>
+                      <button class="danmaku-delete-btn" onclick="deleteMsg(${item.id})">×</button>
+                  </div>
               </div>
           `).join("");
       }
@@ -513,8 +587,6 @@
       // ================= 4. 管理员逻辑 =================
       function showAdminLogin() {
           document.getElementById('adminSection').style.display = 'flex';
-          document.getElementById('loginForm').style.display = 'block';
-          document.getElementById('managePanel').style.display = 'none';
       }
 
       async function adminLogin() {
@@ -534,36 +606,16 @@
       async function adminLogout() {
           await supabaseClient.auth.signOut();
           alert('已退出管理');
-          closeAdminPanel();
       }
 
-      async function loadManageList() {
-          const listDiv = document.getElementById('msgManageList');
-          listDiv.innerHTML = '<p>加载中...</p>';
-          const { data, error } = await supabaseClient.from('messages')
-              .select('*').order('created_at', { ascending: false }).limit(100);
-          if (error) {
-              listDiv.innerHTML = '<p style="color:red;">加载失败</p>';
-              return;
-          }
-          if (data.length === 0) {
-              listDiv.innerHTML = '<p>暂无留言</p>';
-              return;
-          }
-          listDiv.innerHTML = data.map(msg => `
-              <div class="msg-manage-item">
-                  <span class="msg-manage-text">${escapeHtml(msg.content)}</span>
-                  <button class="delete-btn" onclick="deleteMsg(${msg.id})">删除</button>
-              </div>`).join('');
-      }
-
+      // 删除弹幕
       async function deleteMsg(id) {
-          if (!confirm('确定要删除这条留言吗？')) return;
+          if (!confirm('确定要删除这条弹幕吗？')) return;
           const { error } = await supabaseClient.from('messages').delete().eq('id', id);
-          if (error) alert('删除失败：' + error.message);
-          else {
-              alert('删除成功！');
-              loadManageList();
+          if (error) {
+              alert('删除失败：' + error.message);
+          } else {
+              loadPanelDanmaku();
               loadDanmaku();
           }
       }
@@ -573,34 +625,37 @@
           return text.replace(/[&<>"']/g, m => map[m]);
       }
 
-      // 页面加载完成后执行，修复空指针报错
+      // 页面加载完成后执行
       document.addEventListener('DOMContentLoaded', () => {
           loadDanmaku();
 
+          // Enter 键快捷发送弹幕
+          document.getElementById('tufeiMsgInput').addEventListener('keydown', e => {
+              if (e.key === 'Enter') submitTufeiMsg();
+          });
+
           // 登录状态监听
           supabaseClient.auth.onAuthStateChange((event, session) => {
-              const loginForm = document.getElementById('loginForm');
-              const managePanel = document.getElementById('managePanel');
-              const adminSection = document.getElementById('adminSection');
+              const panel = document.getElementById('danmakuPanel');
               
-              if (!loginForm || !managePanel || !adminSection) return;
-
               if (event === 'SIGNED_IN' && session) {
-                  loginForm.style.display = 'none';
-                  managePanel.style.display = 'block';
-                  loadManageList();
+                  alert('登录成功');
+                  closeAdminPanel();
+                  panel.classList.add('admin-active');
+                  // 侧边栏打开时刷新列表显示删除按钮
+                  if (panel.classList.contains('open')) {
+                      loadPanelDanmaku();
+                  }
               } else if (event === 'SIGNED_OUT') {
-                  adminSection.style.display = 'none';
+                  panel.classList.remove('admin-active');
+                  closeAdminPanel();
               }
           });
 
           // 初始化会话校验
           supabaseClient.auth.getSession().then(({ data: { session } }) => {
               if (session) {
-                  document.getElementById('adminSection').style.display = 'flex';
-                  document.getElementById('loginForm').style.display = 'none';
-                  document.getElementById('managePanel').style.display = 'block';
-                  loadManageList();
+                  document.getElementById('danmakuPanel').classList.add('admin-active');
               }
           });
       });
