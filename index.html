@@ -392,12 +392,18 @@
       /* --- 手机端适配优化 --- */
       @media (max-width: 768px) {
           .container {
-              padding: 0 15px;
+              padding: 20px 15px;
               box-sizing: border-box;
+          }
+          .header-image {
+              border-radius: 16px;
+              width: 100%;
+              box-sizing: border-box;
+              overflow: hidden;
           }
           .header-text {
               font-size: 32px;
-              margin-top: 60px;
+              margin-top: 20px;
           }
           .subtitle {
               font-size: 14px;
@@ -444,7 +450,6 @@
               font-size: 12px;
           }
       }
-
       @media (max-width: 400px) {
           .danmaku-panel { width: 100%; right: -100%; }
       }
