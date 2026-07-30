@@ -72,80 +72,157 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <!-- 留言板核心逻辑 -->
+  <!-- 引入 Supabase 官方 JS 库 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 🌟 新增：弹幕专属样式 -->
+  <style>
+      /* 1. 弹幕容器：限制高度，超出隐藏，作为弹幕的“轨道” */
+      .danmaku-container {
+          position: relative;
+          width: 100%;
+          height: 220px; /* 弹幕区域的高度，你可以自己改 */
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.1); /* 半透明背景，融入你的网页 */
+          border-radius: 12px;
+          border: 1px dashed rgba(255,255,255,0.3); /* 虚线边框，更有游戏感 */
+          margin-top: 15px;
+          backdrop-filter: blur(5px); /* 毛玻璃效果 */
+      }
+
+      /* 2. 单条弹幕的样式 */
+      .danmaku-item {
+          position: absolute;
+          left: 100%; /* 初始位置在屏幕最右侧外面 */
+          white-space: nowrap; /* 强制文字不换行 */
+          padding: 6px 14px;
+          background: rgba(0, 0, 0, 0.5); /* 半透明黑底 */
+          color: #fff; /* 白色文字 */
+          font-size: 15px;
+          font-weight: bold;
+          border-radius: 20px; /* 胶囊形状 */
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          /* 动画设置：线性移动，无限循环(或者forwards只播一次，这里用forwards飘出去就没了) */
+          animation: danmaku-move linear forwards; 
+          pointer-events: none; /* 让鼠标可以穿透弹幕，不影响点击下面的东西 */
+      }
+
+      /* 3. 弹幕移动动画：从右向左飘 */
+      @keyframes danmaku-move {
+          0% { 
+              transform: translateX(0); 
+          }
+          100% { 
+              /* 向左移动：自身宽度(100%) + 整个屏幕宽度(100vw)，确保完全飘出左侧屏幕 */
+              transform: translateX(calc(-100% - 100vw)); 
+          }
+      }
+      
+      /* 弹幕加载中的提示文字居中 */
+      .danmaku-container .loading-text {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: rgba(255,255,255,0.6);
+      }
+  </style>
+
+  <!-- 🌟 核心逻辑：弹幕渲染 + 防连点 -->
   <script>
-      // ⚠️⚠️⚠️ 关键步骤：你的 Supabase URL 和 anon key
       const SUPABASE_URL = 'https://iezmnejfdaorhusjxggs.supabase.co'; 
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imllem1uZWpmZGFvcmh1c2p4Z2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNzA2NTMsImV4cCI6MjEwMDk0NjY1M30.MLRHHHGu5ZyjdnTVAT5fE6AM03zjURDdfupJIcuZXM0'; 
 
       const { createClient } = supabase;
       const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // 🛡️ 新增：定义一个全局变量，用来记录“上一次发送留言的时间”
-      // 初始值为 0，代表很久以前
-      let lastSendTime = 0; 
+      let lastSendTime = 0; // 防连点计时器
 
+      // 发送留言
       async function submitTufeiMsg() {
-          // 🛡️ 新增：防连点/防刷屏检查
-          const now = Date.now(); // 获取当前时间（毫秒）
-          
-          // 如果当前时间 减去 上次发送时间 小于 3000毫秒（也就是3秒）
+          const now = Date.now();
           if (now - lastSendTime < 3000) {
               alert('手速太快啦！请休息 3 秒后再发哦~ 🐢');
-              return; // 直接停止执行，不往下走
+              return;
           }
-          
-          // 如果通过了时间检查，就把“上次发送时间”更新为“现在”
           lastSendTime = now;
-          // 🛡️ 防连点逻辑结束
 
-          // --- 下面是你原来的正常逻辑 ---
           const input = document.getElementById('tufeiMsgInput');
           const content = input.value.trim();
           if (!content) return alert('留言不能为空哦！');
 
           const btn = document.querySelector('.tufei-msg-btn');
-          btn.innerText = '发送中...';
+          btn.innerText = '发射弹幕...';
           btn.disabled = true;
 
           const { error } = await supabaseClient.from('messages').insert([{ content }]);
 
           if (error) {
               console.error('提交失败:', error);
-              alert('提交失败，请检查网络');
+              alert('发射失败，请检查网络');
           } else {
               input.value = '';
-              loadTufeiMsgs();
+              loadTufeiMsgs(); // 重新加载弹幕
           }
-          btn.innerText = '发送';
+          btn.innerText = '发射';
           btn.disabled = false;
       }
 
+      // 加载并渲染弹幕
       async function loadTufeiMsgs() {
-          const listDiv = document.getElementById('tufeiMsgList');
-          const { data, error } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: false }).limit(20);
+          const container = document.getElementById('tufeiMsgList');
+          
+          // 给容器加上弹幕专属的 class
+          container.className = 'danmaku-container';
+          container.innerHTML = '<p class="loading-text">弹幕装填中...</p>';
+
+          // 获取最新 30 条留言（弹幕形式可以稍微多加载一点）
+          const { data, error } = await supabaseClient
+              .from('messages')
+              .select('content') // 弹幕不需要显示时间，只查内容即可，节省流量
+              .order('created_at', { ascending: false })
+              .limit(30);
 
           if (error) {
-              listDiv.innerHTML = '<p class="loading-text" style="color:red;">加载失败</p>';
+              container.innerHTML = '<p class="loading-text" style="color:red;">弹幕系统故障</p>';
               return;
           }
 
+          container.innerHTML = ''; // 清空容器
+
           if (data.length === 0) {
-              listDiv.innerHTML = '<p class="loading-text">还没有留言，快来抢沙发！</p>';
-          } else {
-              listDiv.innerHTML = data.map(msg => `
-                  <div class="tufei-msg-item">
-                      <span class="msg-text">${escapeHtml(msg.content)}</span>
-                      <span class="tufei-msg-time">${new Date(msg.created_at).toLocaleString()}</span>
-                  </div>
-              `).join('');
+              container.innerHTML = '<p class="loading-text">还没有弹幕，快来发射第一条！</p>';
+              return;
           }
+
+          // 获取容器的高度，用于计算弹幕的随机垂直位置
+          const containerHeight = container.offsetHeight;
+
+          // 遍历数据，生成弹幕
+          data.forEach((msg, index) => {
+              const div = document.createElement('div');
+              div.className = 'danmaku-item';
+              div.innerText = msg.content; // 使用纯文本，防 XSS
+
+              // 1. 随机垂直位置 (距离顶部 10px 到 底部 40px 之间)
+              const maxTop = containerHeight - 40;
+              const randomTop = Math.random() * maxTop;
+              div.style.top = `${randomTop}px`;
+
+              // 2. 随机飘动速度 (8秒 到 16秒 之间，让弹幕看起来有快有慢)
+              const duration = 8 + Math.random() * 8;
+              div.style.animationDuration = `${duration}s`;
+
+              // 3. 随机延迟 (让历史弹幕均匀分布在屏幕上，而不是一股脑全从右边出来)
+              // 使用负数延迟，可以让弹幕直接从屏幕中间开始飘
+              const delay = Math.random() * duration; 
+              div.style.animationDelay = `-${delay}s`;
+
+              container.appendChild(div);
+          });
       }
 
-      function escapeHtml(text) {
-          const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-          return text.replace(/[&<>"']/g, m => map[m]);
-      }
-
+      // 页面加载完成后初始化
       document.addEventListener('DOMContentLoaded', loadTufeiMsgs);
   </script>
 </body>
