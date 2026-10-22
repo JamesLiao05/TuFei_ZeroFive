@@ -252,6 +252,7 @@ button.opt:hover{border-color:var(--line-2);box-shadow:var(--shadow-s);transform
 .blindmsg{text-align:center;color:var(--sub);font-size:13px;padding:16px 0 4px}
 .d-hint{display:none}
 .settings-wrap{max-width:760px;margin:0 auto;width:100%}
+input[type=checkbox].mini-cb{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;margin:0 2px 0 0;flex:0 0 auto}
 
 /* 主题切换按钮 */
 .fab{
@@ -314,7 +315,7 @@ var KEY='shuati.bank.v1';
 var DEMO=(window.BANK&&window.BANK.questions&&window.BANK.questions.length)?window.BANK:{title:'题库未加载',questions:[]};
 
 /* ---------------- storage ---------------- */
-function defDB(){return {bank:null,wrong:{},fav:{},stats:{answered:0,correct:0},pos:{},seeded:false,settings:{blind:false}};}
+function defDB(){return {bank:null,wrong:{},fav:{},seen:{},stats:{answered:0,correct:0},pos:{},seeded:false,settings:{blind:false,copyOpts:true},examState:null};}
 var DB;
 try{var raw=localStorage.getItem(KEY);DB=raw?Object.assign(defDB(),JSON.parse(raw)):defDB();}catch(e){DB=defDB();}
 if(!DB.settings)DB.settings={blind:false};
@@ -404,6 +405,10 @@ function startPractice(mode){
     startSession('practice','fav',shuffle(ids),{});
   }else if(mode==='random'){
     startSession('practice','random',shuffle(ids),{});
+  }else if(mode==='unseen'){
+    var uids=ids.filter(function(id){return !DB.seen[id];});
+    if(!uids.length)return toast('所有题目都刷过啦 🎉');
+    startSession('practice','unseen',uids,{});
   }else if(mode==='recite'){
     var rp=Math.min(DB.pos.recite||0,ids.length-1);
     startSession('recite','recite',ids,{start:rp});
@@ -416,6 +421,16 @@ var EXAM_SECONDS=30*60;
 var EXAM_PLAN={single:60,multi:20,judge:20};
 var EXAM_ORDER=['single','multi','judge'];
 function startExam(){
+  // 有未完成的考试则恢复
+  if(DB.examState && DB.examState.list && DB.examState.list.length){
+    var st=DB.examState;
+    S={kind:'exam',mode:'exam',list:st.list,i:st.i||0,ans:st.ans||{},finished:false,endAt:Date.now()+(st.remainingSec||0)*1000,limit:EXAM_SECONDS,sheetOpen:false};
+    dir=0;render();
+    return;
+  }
+  startExamFresh();
+}
+function startExamFresh(){
   var qs=qlist().filter(function(q){return q.options.length&&q.answer.length;});
   if(!qs.length)return toast('题库里没有可自动判分的客观题');
   var pool={single:[],multi:[],judge:[]};
@@ -427,6 +442,16 @@ function startExam(){
   });
   if(!ids.length)return toast('题库里没有可自动判分的客观题');
   startSession('exam','exam',ids,{limit:EXAM_SECONDS,endAt:Date.now()+EXAM_SECONDS*1000});
+}
+function saveExamState(){
+  if(!S||S.kind!=='exam'||S.finished)return;
+  var remainingSec=Math.max(0,Math.round((S.endAt-Date.now())/1000));
+  DB.examState={list:S.list.slice(),ans:Object.assign({},S.ans),i:S.i,remainingSec:remainingSec};
+  save();
+}
+function clearExamState(){
+  DB.examState=null;
+  save();
 }
 
 /* ---------------- grading ---------------- */
@@ -530,6 +555,7 @@ function homeView(){
   var modes=''+
   '<div class="modes">'+
     '<button class="tile" data-act="mode" data-mode="order"><span class="em">📖</span><b>顺序练习</b><span>接着上次继续</span></button>'+
+    '<button class="tile" data-act="mode" data-mode="unseen"><span class="em">✨</span><b>未刷题</b><span>还没刷过的题</span></button>'+
     '<button class="tile" data-act="mode" data-mode="random"><span class="em">🔀</span><b>随机练习</b><span>打乱顺序</span></button>'+
     '<button class="tile" data-act="mode" data-mode="recite"><span class="em">🧠</span><b>背题模式</b><span>题目答案一起看</span></button>'+
     '<button class="tile" data-act="mode" data-mode="exam"><span class="em">📝</span><b>模拟考试</b><span>60 单选 + 20 多选 + 20 判断</span></button>'+
@@ -545,6 +571,7 @@ function homeView(){
 function cardView(){
   var q=qById(S.list[S.i]);
   if(!q)return '<div class="empty">题目不存在</div>';
+  if(!DB.seen[q.id]){DB.seen[q.id]=1;save();}
   var isExam=S.kind==='exam';
   var isRecite=S.kind==='recite';
   var a=S.ans[q.id];
@@ -558,7 +585,7 @@ function cardView(){
     '<div class="topbar">'+
       '<button class="iconbtn" data-act="quit">‹</button>'+
       '<div class="ttl">'+(isExam?'模拟考试':(isRecite?'背题模式':'练习'))+'</div>'+
-      (isExam?'<div style="font-weight:700;font-variant-numeric:tabular-nums" id="clock">--:--</div>':'<div class="ttl" style="flex:0 0 auto;text-align:right">'+(S.i+1)+' / '+S.list.length+'</div>')+
+      (isExam?'<div style="font-weight:700;font-variant-numeric:tabular-nums" id="clock">--:--</div><button class="iconbtn" data-act="restart-exam" title="重新开始" style="width:32px;height:32px;font-size:15px;padding:0">↺</button>':'<div class="ttl" style="flex:0 0 auto;text-align:right">'+(S.i+1)+' / '+S.list.length+'</div>')+
     '</div>'+
     '<div class="bar"><i style="width:'+pct+'%"></i></div>';
   var tagMap={single:'单选',multi:'多选',judge:'判断',fill:'填空'};
@@ -567,6 +594,8 @@ function cardView(){
     (S.mode==='wrong'?'<span class="tag bad">错题</span>':'')+
     '<span style="flex:1"></span>'+
     (isRecite?'<button class="switch '+(DB.settings.blind?'on':'')+'" data-act="blind"><i></i>遮挡</button>':'')+
+    '<input type="checkbox" class="mini-cb" data-act="copy-opts" title="复制时包含选项" '+(DB.settings.copyOpts!==false?'checked':'')+'>'+
+    '<button data-act="copy" style="font-size:14px;line-height:1;padding:0 2px" title="复制题目">📋</button>'+
     '<button data-act="fav" style="font-size:18px;line-height:1;padding:0 2px">'+(DB.fav[q.id]?'⭐':'☆')+'</button>'+
   '</div>'+
   '<div class="stem">'+esc(q.stem)+'</div>';
@@ -729,10 +758,45 @@ function onClick(e){
   if(act==='self-ok'){selfJudge(true);return;}
   if(act==='self-bad'){selfJudge(false);return;}
   if(act==='fav'){toggleFav();return;}
+  if(act==='copy'){
+    var q=qById(S.list[S.i]);if(!q)return;
+    var lines=[q.stem];
+    if(DB.settings.copyOpts!==false){
+      (q.options||[]).forEach(function(o){lines.push(o[0]+'. '+o[1]);});
+    }
+    var text=lines.join('\n');
+    function done(){toast('题目已复制');}
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){fallbackCopy(text,done);});
+    }else{fallbackCopy(text,done);}
+    return;
+  }
+  if(act==='copy-opts'){
+    DB.settings.copyOpts=el.checked;
+    save();
+    return;
+  }
+  if(act==='restart-exam'){
+    if(!confirm('重新开始考试？当前进度和剩余时间将被清空。'))return;
+    clearExamState();
+    startExamFresh();
+    return;
+  }
   if(act==='jump'){S.i=Number(el.getAttribute('data-i'));dir=0;render();return;}
   if(act==='sheet'){S.sheetOpen=!S.sheetOpen;render();return;}
   if(act==='submit'){finishExam();return;}
-  if(act==='quit'){if(confirm('退出本轮？进度会保留已完成的部分。')){S=null;render();}return;}
+  if(act==='quit'){
+    if(S&&S.kind==='exam'){
+      saveExamState();
+      if(confirm('退出考试？计时已暂停，下次进入模拟考试将接着考。')){S=null;render();}
+    }else{
+      if(S&&S.mode==='order')DB.pos.practice=S.i;
+      if(S&&S.mode==='recite')DB.pos.recite=S.i;
+      save();
+      if(confirm('退出本轮？进度已保存。')){S=null;render();}
+    }
+    return;
+  }
   if(act==='home'){S=null;render();return;}
   if(act==='redo-wrong'){
     var ids=S.list.filter(function(id){var a=S.ans[id];return a&&a.ok===false;});
@@ -826,6 +890,7 @@ function finishExam(){
       record(q,false);
     }
   });
+  clearExamState();
   S.finished=true;dir=0;render();
 }
 
@@ -851,6 +916,12 @@ function initTheme(){
 }
 
 /* ---------------- toast ---------------- */
+function fallbackCopy(text,cb){
+  var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  ta.remove();if(cb)cb();
+}
 var toastT=null;
 function toast(msg){
   var old=document.querySelector('.toast');if(old)old.remove();
@@ -865,6 +936,12 @@ initTheme();
 prepareBank();
 save();
 render();
+window.addEventListener('beforeunload',function(){
+  if(S&&S.kind==='exam'&&!S.finished)saveExamState();
+});
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden&&S&&S.kind==='exam'&&!S.finished)saveExamState();
+});
 /* 调试用句柄（不影响正常使用） */
 window.STUDY={start:startPractice,exam:startExam,session:function(){return S;},db:function(){return DB;},goto:function(i){if(S){S.i=i;dir=0;render();}}};
 })();
