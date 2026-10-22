@@ -234,6 +234,9 @@ button.opt:hover{border-color:var(--line-2);box-shadow:var(--shadow-s);transform
 .panel h3{margin:0 0 8px;font-size:15px;letter-spacing:.01em}
 .panel p{margin:6px 0;font-size:13px;color:var(--sub)}
 .hint{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.7}
+.verbar{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0 0;font-size:11px;color:var(--sub);letter-spacing:.02em}
+.verbar .ver{font-weight:700;color:var(--accent)}
+.verbar button{font-size:12px;line-height:1;padding:2px 4px;cursor:pointer}
 .empty{text-align:center;padding:50px 20px;color:var(--sub);font-size:14px}
 .toast{
   position:fixed;left:50%;bottom:52px;transform:translateX(-50%);
@@ -484,7 +487,8 @@ function render(){
   if(!S)html=homeView();
   else if(S.finished)html=resultView();
   else html=cardView();
-  app.innerHTML=html;
+  var verbar='<div class="verbar"><span class="ver">TU-V1.0</span><button data-act="ver-info" title="更新时间">🕐</button></div>';
+  app.innerHTML=verbar+html;
   bind();
   if(S&&S.kind==='exam'&&!S.finished)tickClock(true);
 }
@@ -817,6 +821,7 @@ function onClick(e){
   if(act==='help'){document.querySelector('#app').innerHTML=helpView();bind();return;}
   if(act==='theme'){toggleTheme();return;}
   if(act==='blind'){DB.settings.blind=!DB.settings.blind;save();render();return;}
+  if(act==='ver-info'){toast('更新于 2026-10-22 20:38:17');return;}
   if(act==='showans'){S.revealed=S.revealed||{};S.revealed[S.list[S.i]]=1;render();return;}
   if(act==='reset-wrong'){DB.wrong={};save();toast('错题本已清空');render();return;}
   if(act==='reset-all'){if(confirm('清空所有练习记录、错题和收藏？题库保留。')){DB.wrong={};DB.fav={};DB.stats={answered:0,correct:0};DB.pos={};save();toast('已清空');S=null;render();}return;}
