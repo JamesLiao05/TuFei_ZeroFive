@@ -211,6 +211,7 @@ button.opt:hover{border-color:var(--line-2);box-shadow:var(--shadow-s);transform
 .sheet b.done{background:var(--accent-soft);border-color:var(--line-2);color:var(--accent)}
 .sheet b.cur{outline:2px solid var(--accent);outline-offset:1px}
 .sheet b.wrong{background:var(--bad-soft);border-color:var(--bad-line);color:var(--bad)}
+.sheet b.right{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
 
 /* ============ 结果页 ============ */
 .score{
@@ -642,20 +643,29 @@ function cardView(){
   var nav=''+
     '<div class="foot">'+
       '<button class="btn ghost" data-act="prev" '+(S.i===0?'disabled style="opacity:.4"':'')+'>上一题</button>'+
-      '<div class="mid"></div>'+
+      '<div class="mid"><button class="btn" data-act="sheet" style="padding:8px 14px;font-size:13px">题号</button></div>'+
       (isExam
-        ? '<button class="btn" data-act="sheet">答题卡</button><button class="btn pri" data-act="submit">交卷</button>'
+        ? '<button class="btn pri" data-act="submit">交卷</button>'
         : (isRecite&&blind
             ? '<button class="btn" data-act="showans">显示答案</button><button class="btn pri" data-act="next">'+(S.i===S.list.length-1?'完成':'下一题')+'</button>'
             : '<button class="btn pri" data-act="next">'+(S.i===S.list.length-1?'完成':'下一题')+'</button>'))
     +'</div>';
   var sheet='';
-  if(isExam&&S.sheetOpen){
-    sheet='<div class="card" style="margin-top:14px"><div style="font-size:13px;color:#7b8496;margin-bottom:8px">答题卡</div><div class="sheet">'+
+  if(S.sheetOpen){
+    var legend='<div style="display:flex;gap:14px;font-size:11px;color:var(--sub);margin-bottom:10px;flex-wrap:wrap">'+
+      '<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:12px;height:12px;border-radius:3px;background:var(--card);border:1px solid var(--line);display:inline-block"></i>未答</span>'+
+      '<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:12px;height:12px;border-radius:3px;background:var(--ok-soft);border:1px solid var(--ok-line);display:inline-block"></i>答对</span>'+
+      '<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:12px;height:12px;border-radius:3px;background:var(--bad-soft);border:1px solid var(--bad-line);display:inline-block"></i>答错</span>'+
+      (isExam?'<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:12px;height:12px;border-radius:3px;background:var(--accent-soft);border:1px solid var(--line-2);display:inline-block"></i>已选</span>':'')+
+    '</div>';
+    sheet='<div class="card" style="margin-top:14px"><div style="font-size:13px;color:var(--sub);margin-bottom:4px">题目导航</div>'+legend+'<div class="sheet">'+
       S.list.map(function(id,idx){
         var aa=S.ans[id];
         var c=idx===S.i?'cur':'';
-        if(aa&&aa.picked&&aa.picked.length)c+=' done';
+        if(aa&&aa.ok===true)c+=' right';
+        else if(aa&&aa.ok===false)c+=' wrong';
+        else if(aa&&aa.picked&&aa.picked.length)c+=' done';
+        else if(isRecite)c+=' done';
         return '<b class="'+c+'" data-act="jump" data-i="'+idx+'">'+(idx+1)+'</b>';
       }).join('')+'</div></div>';
   }
@@ -782,7 +792,7 @@ function onClick(e){
     startExamFresh();
     return;
   }
-  if(act==='jump'){S.i=Number(el.getAttribute('data-i'));dir=0;render();return;}
+  if(act==='jump'){S.i=Number(el.getAttribute('data-i'));dir=0;if(S.mode==='order')DB.pos.practice=S.i;if(S.mode==='recite')DB.pos.recite=S.i;save();render();return;}
   if(act==='sheet'){S.sheetOpen=!S.sheetOpen;render();return;}
   if(act==='submit'){finishExam();return;}
   if(act==='quit'){
