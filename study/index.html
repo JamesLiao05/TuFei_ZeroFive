@@ -168,6 +168,12 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .tag.ok{background:var(--ok-soft);color:var(--ok)}
 .tag.bad{background:var(--bad-soft);color:var(--bad)}
 .stem{font-size:17px;line-height:1.75;font-weight:600;white-space:pre-wrap;word-break:break-word}
+.qimgs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.qimgs img{display:block;max-width:100%;max-height:320px;border-radius:10px;border:1px solid var(--line);background:var(--card-2);cursor:zoom-in;box-shadow:var(--shadow-s);transition:box-shadow var(--fast)}
+.qimgs img:hover{box-shadow:var(--shadow-m)}
+.img-lightbox{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+.img-lightbox img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.img-lightbox .close{position:absolute;top:18px;right:22px;color:#fff;font-size:28px;line-height:1;opacity:.85}
 .opts{display:flex;flex-direction:column;gap:10px;margin-top:18px}
 .opt{
   display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:14px;
@@ -258,6 +264,34 @@ button.opt:hover{border-color:var(--line-2);box-shadow:var(--shadow-s);transform
 .settings-wrap{max-width:760px;margin:0 auto;width:100%}
 input[type=checkbox].mini-cb{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;margin:0 2px 0 0;flex:0 0 auto}
 
+/* ============ 题库选择 ============ */
+.bank-pick{
+  display:block;width:100%;text-align:left;margin-bottom:12px;padding:16px 18px;border-radius:var(--r);
+  background:var(--card);border:1.5px solid var(--line);box-shadow:var(--shadow-s);cursor:pointer;
+  transition:transform var(--fast),box-shadow var(--fast),border-color var(--fast),background var(--fast);
+}
+.bank-pick:hover{transform:translateY(-2px);box-shadow:var(--shadow-m);border-color:var(--line-2)}
+.bank-pick:active{transform:scale(.99)}
+.bank-pick.active{border-color:var(--accent);background:var(--accent-soft);box-shadow:var(--ring)}
+.bank-pick .bt{display:flex;align-items:center;gap:8px}
+.bank-pick .bt b{font-size:16px;flex:1;min-width:0}
+.bank-pick .bt .cur-tag{padding:2px 8px;border-radius:8px;background:var(--accent);color:var(--on-accent);font-size:11px;font-weight:700;white-space:nowrap}
+.bank-pick .bd{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.7}
+.bank-pick .bnums{display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--sub)}
+.bank-pick .bnums b{color:var(--ink);font-size:14px}
+.home-bank{
+  display:flex;align-items:center;gap:8px;width:100%;margin:0 0 14px;padding:12px 14px;border-radius:14px;
+  background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-s);text-align:left;
+  transition:transform var(--fast),box-shadow var(--fast),border-color var(--fast);
+}
+.home-bank:hover{border-color:var(--line-2);box-shadow:var(--shadow-m)}
+.home-bank:active{transform:scale(.99)}
+.home-bank .ic{font-size:20px;line-height:1}
+.home-bank .tx{flex:1;min-width:0}
+.home-bank .tx b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-bank .tx span{font-size:12px;color:var(--sub)}
+.home-bank .arw{color:var(--sub);font-size:18px}
+
 /* 主题切换按钮 */
 .fab{
   position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));
@@ -293,6 +327,8 @@ input[type=checkbox].mini-cb{width:15px;height:15px;accent-color:var(--accent);c
   .hero h1{font-size:20px}
   .stem{font-size:16px}
   .sheet{grid-template-columns:repeat(6,1fr)}
+  .foot{gap:6px}
+  .foot .btn{padding:10px 12px;font-size:13px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
@@ -314,16 +350,148 @@ var $$ = function(s,r){return Array.prototype.slice.call((r||document).querySele
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 var KEY='shuati.bank.v1';
+var BANK_DIR='题库/';   // 题库文件夹：往里放 JSON 即自动识别
 
-/* ---------------- demo ---------------- */
-var DEMO=(window.BANK&&window.BANK.questions&&window.BANK.questions.length)?window.BANK:{title:'题库未加载',questions:[]};
+/* ---------------- 多题库定义 ---------------- */
+function normalizeBankList(arr){
+  arr.forEach(function(b,i){
+    b.id=b.id||('bank'+i);
+    b.title=b.title||('题库 '+(i+1));
+    b.questions=b.questions||[];
+  });
+  return arr;
+}
+// 内置题库（bank.js）作为兜底：本地 file:// 打开或扫描失败时仍可用
+var BUILTIN_BANKS=normalizeBankList(
+  (window.BANKS&&window.BANKS.length)?window.BANKS:
+  (window.BANK&&window.BANK.questions&&window.BANK.questions.length?[window.BANK]:[])
+);
+var BANKS=BUILTIN_BANKS.slice();
+function bankById(id){for(var i=0;i<BANKS.length;i++){if(BANKS[i].id===id)return BANKS[i];}return BANKS[0]||null;}
+function bankMeta(id){
+  var b=bankById(id);if(!b)return null;
+  var c={single:0,multi:0,judge:0,fill:0};
+  b.questions.forEach(function(q){c[q.type]=(c[q.type]||0)+1;});
+  return {id:b.id,title:b.title,count:b.questions.length,types:c};
+}
 
-/* ---------------- storage ---------------- */
-function defDB(){return {bank:null,wrong:{},fav:{},seen:{},stats:{answered:0,correct:0},pos:{},seeded:false,settings:{blind:false,copyOpts:true},examState:null};}
+/* ---------------- 题库文件夹自动扫描 ----------------
+   发布到网站/服务器时，页面自动读取「题库/」文件夹里的 JSON 作为题库来源。
+   往文件夹放一个新题库 JSON → 刷新页面即可识别，无需改代码。
+   扫描失败（如本地 file:// 打开）时自动回退到 bank.js 内置题库。 */
+function parseBankDoc(obj,name){
+  if(!obj)return null;
+  var arr=Array.isArray(obj)?obj:(Array.isArray(obj.banks)?obj.banks:[obj]);
+  var out=[];
+  arr.forEach(function(b){
+    if(!b||!Array.isArray(b.questions)||!b.questions.length)return;
+    // 跳过模板占位题库（标题含占位提示，或 id 为空且题数很少）
+    var t=String(b.title||'');
+    if(/这里写|在这里|示例|模板|example|template/i.test(t))return;
+    b.id=b.id||('bank_'+String(name||t).replace(/\.[^.]+$/,'').replace(/[^\w\u4e00-\u9fa5]/g,'_'));
+    b.title=t||name||'题库';
+    // 相对路径图片（如 图片/电路图.png）转成题库文件夹下的完整 URL
+    (b.questions||[]).forEach(function(q){
+      if(!Array.isArray(q.images))return;
+      q.images=q.images.map(function(u){
+        if(typeof u!=='string')return u;
+        if(/^(data:|https?:|\/)/i.test(u))return u;   // 内嵌/网络/绝对路径，保持原样
+        var abs=BANK_DIR+u.replace(/^\.\//,'');        // 相对路径补上题库目录
+        try{return new URL(abs,location.href).href;}catch(e){return abs;}
+      });
+    });
+    out.push(b);
+  });
+  return out;
+}
+function scanBankFolder(){
+  // 只支持 http(s) 环境；file:// 下 fetch 会被浏览器拦截，直接用内置题库
+  if(!/^https?:$/.test(location.protocol))return Promise.resolve(false);
+  // 先取目录列表，解析出所有 .json 文件名
+  return fetch(BANK_DIR,{cache:'no-store'}).then(function(r){
+    if(!r.ok)throw new Error('no listing');return r.text();
+  }).then(function(html){
+    var names=[],seen={},re=/href\s*=\s*["']?([^"'\s>]+?\.json)["'\s>]/gi,m;
+    while((m=re.exec(html))){
+      var raw=decodeURIComponent(m[1].split('/').pop().split('?')[0]);
+      if(!raw||seen[raw])continue;seen[raw]=1;
+      if(/_题库清单|模板/.test(raw))continue;   // 排除清单与模板
+      names.push(raw);
+    }
+    if(!names.length)throw new Error('no json');
+    // 逐个读取题库 JSON
+    return Promise.all(names.map(function(n){
+      return fetch(BANK_DIR+encodeURIComponent(n),{cache:'no-store'})
+        .then(function(r){return r.ok?r.json():null;})
+        .then(function(obj){return parseBankDoc(obj,n);})
+        .catch(function(){return null;});
+    }));
+  }).then(function(groups){
+    var list=[];groups.forEach(function(g){if(g)list=list.concat(g);});
+    if(!list.length)throw new Error('no banks');
+    // 用文件夹题库替换 BANKS（按 id 去重，首次出现的优先）
+    var uniq={},final=[];
+    list.forEach(function(b){if(!uniq[b.id]){uniq[b.id]=1;final.push(b);}});
+    applyScannedBanks(final);
+    return true;
+  }).catch(function(){return false;});
+}
+function applyScannedBanks(list){
+  BANKS=normalizeBankList(list);
+  // 当前题库若在新列表里不存在，切到第一个
+  var exists=false;
+  BANKS.forEach(function(b){if(b.id===DB.activeBankId)exists=true;});
+  if(!exists&&BANKS.length)DB.activeBankId=BANKS[0].id;
+  // 清理已不在列表里的题库存档
+  var valid={};BANKS.forEach(function(b){valid[b.id]=1;});
+  Object.keys(DB.states).forEach(function(k){if(!valid[k])delete DB.states[k];});
+  prepareBank();save();render();
+}
+
+/* ---------------- storage（按题库隔离，只存进度不存题目） ----------------
+   题库题目来自 bank.js / 导入文件，只在运行时放 DB.bank；
+   localStorage 里每个题库只存 {wrong,fav,seen,stats,pos,examState,count}，避免大图片撑爆 5MB。 */
+var STATE_FIELDS=['wrong','fav','seen','stats','pos','examState','count'];
+function newState(bank){
+  return {wrong:{},fav:{},seen:{},stats:{answered:0,correct:0},pos:{},examState:null,
+          count:(bank&&bank.questions)?bank.questions.length:0};
+}
+function defDB(){
+  return {activeBankId:(BANKS[0]&&BANKS[0].id)||'',states:{},
+          settings:{blind:false,copyOpts:true},
+          wrong:{},fav:{},seen:{},stats:{answered:0,correct:0},pos:{},examState:null};
+}
 var DB;
 try{var raw=localStorage.getItem(KEY);DB=raw?Object.assign(defDB(),JSON.parse(raw)):defDB();}catch(e){DB=defDB();}
+delete DB.bank;   // 顶层永不存题目（旧存档迁移后清掉）
 if(!DB.settings)DB.settings={blind:false};
-function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+if(DB.settings.copyOpts===undefined)DB.settings.copyOpts=true;
+if(!DB.states)DB.states={};
+// 迁移旧版数据：旧 state 里的 bank.questions 丢弃，只保留进度字段；旧顶层数据同理
+function migrateState(oldSt,bank){
+  var st=newState(bank);
+  ['wrong','fav','seen','stats','pos','examState'].forEach(function(f){if(oldSt&&oldSt[f]!==undefined)st[f]=oldSt[f];});
+  return st;
+}
+if(!Object.keys(DB.states).length && DB.bank && DB.bank.questions && DB.bank.questions.length){
+  var migrateId=(DB.activeBankId&&bankById(DB.activeBankId))?DB.activeBankId:(BANKS[0]&&BANKS[0].id);
+  if(migrateId){DB.states[migrateId]=migrateState(DB,bankById(migrateId));delete DB.bank;}
+}
+// 清理可能残留的 bank 字段
+Object.keys(DB.states).forEach(function(k){if(DB.states[k]&&DB.states[k].bank)delete DB.states[k].bank;});
+function persistState(){
+  if(!DB.activeBankId)return;
+  var st={};STATE_FIELDS.forEach(function(f){st[f]=DB[f];});
+  st.count=(bankById(DB.activeBankId)||{questions:[]}).questions.length;
+  DB.states[DB.activeBankId]=st;
+}
+function save(){
+  persistState();
+  // 只持久化进度字段，绝不把运行时题库（含图片）写进 localStorage
+  var out={activeBankId:DB.activeBankId,states:DB.states,settings:DB.settings,
+           wrong:DB.wrong,fav:DB.fav,seen:DB.seen,stats:DB.stats,pos:DB.pos,examState:DB.examState};
+  try{localStorage.setItem(KEY,JSON.stringify(out));}catch(e){}
+}
 
 /* ---------------- 设备标识（cookie + localStorage 双写） ---------------- */
 var DEVICE_ID=(function(){
@@ -340,16 +508,36 @@ var DEVICE_ID=(function(){
 })();
 function qlist(){return (DB.bank&&DB.bank.questions)||[];}
 function qById(id){var a=qlist();for(var i=0;i<a.length;i++){if(a[i].id!==undefined&&a[i].id===id)return a[i];}return null;}
-function prepareBank(){
-  var cur=DB.bank;
-  // 内置题库：没数据、或上次用的还是内置题库时，自动跟随文件里的题库
-  var useBuiltin=!cur||cur.seed===true||/示例题库/.test(String(cur.title||''));
-  if(useBuiltin){DB.bank={title:DEMO.title,questions:DEMO.questions,seed:true};DB.seeded=true;}
-  var raw=DB.bank.questions||[];
-  var qs=raw.map(normQ).filter(function(q){return q.stem;});
+
+/* 准备/切换题库：题目始终从题库数据现取（运行时），只把进度状态装载到 DB 顶层 */
+function loadBankState(id){
+  var bank=bankById(id);
+  if(!bank)return false;
+  // 先把当前题库的进度存回去
+  if(DB.activeBankId)persistState();
+  DB.activeBankId=bank.id;
+  var st=DB.states[bank.id];
+  // 题目数变化时旧记录的 id 会错位，清掉重来；否则保留进度
+  if(!st||st.count!==bank.questions.length){st=newState(bank);DB.states[bank.id]=st;}
+  ['wrong','fav','seen','stats','pos','examState'].forEach(function(f){DB[f]=st[f]||newState(bank)[f];});
+  // 题目从题库数据现取并归一化；DB.bank 只在内存里，不写进 localStorage
+  var qs=(bank.questions||[]).map(normQ).filter(function(q){return q.stem;});
   qs.forEach(function(q,i){q.id='q'+i;});
-  DB.bank.questions=qs;
-  DB.bank.title=DB.bank.title||'我的题库';
+  DB.bank={title:bank.title||'我的题库',questions:qs};
+  save();
+  return true;
+}
+function prepareBank(){
+  var id=DB.activeBankId;
+  if(!bankById(id))id=(BANKS[0]&&BANKS[0].id);
+  loadBankState(id);
+}
+// 各题库的练习概览（用于题库选择页）
+function bankOverview(id){
+  var st=DB.states[id]||{};
+  var stats=st.stats||{answered:0,correct:0};
+  var acc=stats.answered?Math.round(stats.correct/stats.answered*100):0;
+  return {answered:stats.answered,acc:acc,wrong:Object.keys(st.wrong||{}).length,fav:Object.keys(st.fav||{}).length};
 }
 
 /* ---------------- normalize ---------------- */
@@ -382,6 +570,12 @@ function normQ(raw){
   if(!q.type||q.type==='single'){
     if(q.options.length&&q.answer.length>1)q.type='multi';
     else if(!q.options.length)q.type='fill';
+  }
+  // 题目图片：只接受内嵌 data:image 或 http(s) 地址
+  if(Array.isArray(raw.images)){
+    q.images=raw.images.filter(function(u){
+      return typeof u==='string' && /^(data:image\/[a-zA-Z0-9+.-]+;base64,|https?:\/\/)/i.test(u);
+    });
   }
   q.id='q';
   return q;
@@ -487,7 +681,7 @@ function render(){
   if(!S)html=homeView();
   else if(S.finished)html=resultView();
   else html=cardView();
-  var verbar='<div class="verbar"><span class="ver">TU-V1.1</span><button data-act="ver-info" title="更新时间">🕐</button></div>';
+  var verbar='<div class="verbar"><span class="ver">TU-V2.0 · 多题库</span><button data-act="ver-info" title="更新时间">🕐</button></div>';
   app.innerHTML=verbar+html;
   bind();
   if(S&&S.kind==='exam'&&!S.finished)tickClock(true);
@@ -557,6 +751,20 @@ function homeView(){
       '<div><b>'+nF+'</b>收藏</div>'+
     '</div>'+
   '</div>';
+  var ov=bankOverview(DB.activeBankId);
+  var types=(function(){
+    var m=bankMeta(DB.activeBankId);if(!m)return '';
+    var map={single:'单选',multi:'多选',judge:'判断',fill:'填空'};
+    var parts=[];
+    ['single','multi','judge','fill'].forEach(function(t){if(m.types[t])parts.push(m.types[t]+' '+map[t]);});
+    return parts.join(' · ');
+  })();
+  var bankBar=''+
+  '<button class="home-bank" data-act="banks">'+
+    '<span class="ic">📚</span>'+
+    '<span class="tx"><b>'+esc(DB.bank.title)+'</b><span>'+qs.length+' 题'+(types?' · '+types:'')+' · 已练 '+ov.answered+' · 正确率 '+ov.acc+'%</span></span>'+
+    '<span class="arw">›</span>'+
+  '</button>';
   var modes=''+
   '<div class="modes">'+
     '<button class="tile" data-act="mode" data-mode="order"><span class="em">📖</span><b>顺序练习</b><span>接着上次继续</span></button>'+
@@ -571,7 +779,7 @@ function homeView(){
   '<div class="foot" style="margin-top:20px;justify-content:center">'+
     '<button class="btn" data-act="help">使用说明</button>'+
   '</div>';
-  return '<div class="home-wrap">'+hero+'<div class="home-main">'+modes+imp+'</div></div>';
+  return '<div class="home-wrap">'+hero+'<div class="home-main">'+bankBar+modes+imp+'</div></div>';
 }
 function cardView(){
   var q=qById(S.list[S.i]);
@@ -603,7 +811,10 @@ function cardView(){
     '<button data-act="copy" style="font-size:14px;line-height:1;padding:0 2px" title="复制题目">📋</button>'+
     '<button data-act="fav" style="font-size:18px;line-height:1;padding:0 2px">'+(DB.fav[q.id]?'⭐':'☆')+'</button>'+
   '</div>'+
-  '<div class="stem">'+esc(q.stem)+'</div>';
+  '<div class="stem">'+esc(q.stem)+'</div>'+
+  ((q.images&&q.images.length)?('<div class="qimgs">'+q.images.map(function(u,i){
+    return '<img src="'+esc(u)+'" alt="题目图片 '+(i+1)+'" data-act="zoomimg" loading="lazy">';
+  }).join('')+'</div>'):'');
   var opts='';
   if(q.options.length){
     opts='<div class="opts">'+q.options.map(function(o){
@@ -649,7 +860,10 @@ function cardView(){
       '<button class="btn ghost" data-act="prev" '+(S.i===0?'disabled style="opacity:.4"':'')+'>上一题</button>'+
       '<div class="mid"><button class="btn" data-act="sheet" style="padding:8px 14px;font-size:13px">题号</button></div>'+
       (isExam
-        ? '<button class="btn pri" data-act="submit">交卷</button>'
+        ? (S.i<S.list.length-1
+            ? '<button class="btn pri" data-act="next">下一题</button>'+
+              '<button class="btn" data-act="submit" style="padding:9px 13px;font-size:13px">交卷</button>'
+            : '<button class="btn pri" data-act="submit">交卷</button>')
         : (isRecite&&blind
             ? '<button class="btn" data-act="showans">显示答案</button><button class="btn pri" data-act="next">'+(S.i===S.list.length-1?'完成':'下一题')+'</button>'
             : '<button class="btn pri" data-act="next">'+(S.i===S.list.length-1?'完成':'下一题')+'</button>'))
@@ -719,8 +933,33 @@ function resultView(){
     (wrongs.length?'<button class="btn pri" data-act="redo-wrong" style="flex:1">重做错题</button>':'')+'</div>';
   return head+scoreBox+listHtml+foot;
 }
+
+function banksView(){
+  var head='<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div class="ttl">选择题库</div></div>';
+  var cards='';
+  BANKS.forEach(function(b){
+    var m=bankMeta(b.id)||{count:0,types:{}};
+    var ov=bankOverview(b.id);
+    var active=b.id===DB.activeBankId;
+    var map={single:'单选',multi:'多选',judge:'判断',fill:'填空'};
+    var parts=[];
+    ['single','multi','judge','fill'].forEach(function(t){if(m.types[t])parts.push(m.types[t]+' '+map[t]);});
+    cards+='<div class="bank-pick'+(active?' active':'')+'" data-act="pick-bank" data-id="'+esc(b.id)+'">'+
+      '<div class="bt"><b>'+esc(b.title)+'</b>'+(active?'<span class="cur-tag">当前</span>':'')+'</div>'+
+      '<div class="bd">共 '+m.count+' 题'+(parts.length?' · '+parts.join(' / '):'')+'</div>'+
+      '<div class="bnums"><span><b>'+ov.answered+'</b> 已练</span><span><b>'+ov.acc+'%</b> 正确率</span><span><b>'+ov.wrong+'</b> 错题</span></div>'+
+    '</div>';
+  });
+  var tip='<div class="hint" style="text-align:center;margin-top:14px;line-height:1.8">'+
+    '每个题库的进度、错题、收藏分开保存，切换后各自接着上次的记录。<br>'+
+    '要加新题库：把题库 JSON 放进「题库」文件夹，刷新页面即可。';
+  return '<div class="play-wrap">'+head+'<div class="sect">我的题库（'+BANKS.length+'）</div>'+cards+tip+'</div>';
+}
 function settingsView(){
   return '<div class="settings-wrap">'+'<div class="topbar"><div class="ttl">设置</div><button class="iconbtn" data-act="home">✕</button></div>'+
+  '<div class="panel"><h3>题库</h3><p>当前：'+esc(DB.bank.title)+'（'+qlist().length+' 题）</p>'+
+    '<div style="margin-top:10px"><button class="btn" data-act="banks">切换题库 →</button></div>'+
+  '</div>'+
   '<div class="panel"><h3>背题模式</h3><p>开启后进背题模式默认把答案遮住，点一下再显示，适合先自己回忆一遍。</p>'+
     '<div style="margin-top:10px"><button class="switch '+(DB.settings.blind?'on':'')+'" data-act="blind"><i></i>默认遮挡答案</button></div>'+
   '</div>'+
@@ -759,6 +998,14 @@ function onClick(e){
   var el=e.target.closest('[data-act]');
   if(!el)return;
   var act=el.getAttribute('data-act');
+  if(act==='zoomimg'){
+    var box=document.createElement('div');
+    box.className='img-lightbox';
+    box.innerHTML='<span class="close">✕</span><img src="'+esc(el.getAttribute('src'))+'" alt="题目图片">';
+    box.addEventListener('click',function(){box.remove();});
+    document.body.appendChild(box);
+    return;
+  }
   if(act==='mode'){
     var m=el.getAttribute('data-mode');
     if(m==='exam'){startExam();return;}
@@ -817,14 +1064,26 @@ function onClick(e){
     if(!ids.length)return;
     startSession('practice','wrong',ids,{});return;
   }
+  if(act==='banks'){S=null;if(timerH){clearInterval(timerH);timerH=null;}document.querySelector('#app').innerHTML=banksView();bind();return;}
+  if(act==='pick-bank'){
+    var bid=el.getAttribute('data-id');
+    if(bid===DB.activeBankId){render();return;}
+    // 切换前若在考试中，先保存考试进度
+    if(S&&S.kind==='exam'&&!S.finished)saveExamState();
+    S=null;if(timerH){clearInterval(timerH);timerH=null;}
+    loadBankState(bid);
+    render();
+    toast('已切换到：'+DB.bank.title);
+    return;
+  }
   if(act==='settings'){document.querySelector('#app').innerHTML=settingsView();bind();return;}
   if(act==='help'){document.querySelector('#app').innerHTML=helpView();bind();return;}
   if(act==='theme'){toggleTheme();return;}
   if(act==='blind'){DB.settings.blind=!DB.settings.blind;save();render();return;}
-  if(act==='ver-info'){toast('更新于 2026-10-23 12:24:53');return;}
+  if(act==='ver-info'){toast('TU-V2.0 · 支持多题库切换，各题库记录独立保存');return;}
   if(act==='showans'){S.revealed=S.revealed||{};S.revealed[S.list[S.i]]=1;render();return;}
-  if(act==='reset-wrong'){DB.wrong={};save();toast('错题本已清空');render();return;}
-  if(act==='reset-all'){if(confirm('清空所有练习记录、错题和收藏？题库保留。')){DB.wrong={};DB.fav={};DB.stats={answered:0,correct:0};DB.pos={};save();toast('已清空');S=null;render();}return;}
+  if(act==='reset-wrong'){DB.wrong={};save();toast('当前题库的错题本已清空');document.querySelector('#app').innerHTML=settingsView();bind();return;}
+  if(act==='reset-all'){if(confirm('清空「'+DB.bank.title+'」的练习记录、错题、收藏和进度？其它题库不受影响，题库本身保留。')){DB.wrong={};DB.fav={};DB.seen={};DB.stats={answered:0,correct:0};DB.pos={};DB.examState=null;save();toast('当前题库记录已清空');S=null;document.querySelector('#app').innerHTML=settingsView();bind();}return;}
 }
 function pick(k){
   var q=qById(S.list[S.i]);if(!q||S.finished)return;
@@ -950,10 +1209,19 @@ function toast(msg){
 }
 
 /* ---------------- boot ---------------- */
+// 清理旧版"导入题库"遗留的数据（customBanks 及自定义题库存档）
+try{
+  localStorage.removeItem('shuati.customBanks.v1');
+  if(DB.states){
+    Object.keys(DB.states).forEach(function(k){if(/^custom_/.test(k))delete DB.states[k];});
+  }
+}catch(e){}
 initTheme();
 prepareBank();
 save();
 render();
+// 异步扫描题库文件夹：扫描成功则用文件夹题库替换内置题库并刷新界面
+scanBankFolder();
 window.addEventListener('beforeunload',function(){
   if(S&&S.kind==='exam'&&!S.finished)saveExamState();
 });
@@ -961,7 +1229,8 @@ document.addEventListener('visibilitychange',function(){
   if(document.hidden&&S&&S.kind==='exam'&&!S.finished)saveExamState();
 });
 /* 调试用句柄（不影响正常使用） */
-window.STUDY={start:startPractice,exam:startExam,session:function(){return S;},db:function(){return DB;},goto:function(i){if(S){S.i=i;dir=0;render();}}};
+window.STUDY={start:startPractice,exam:startExam,session:function(){return S;},db:function(){return DB;},goto:function(i){if(S){S.i=i;dir=0;render();}},
+  banks:function(){return BANKS;},scanBankFolder:scanBankFolder};
 })();
 </script>
 </body>
